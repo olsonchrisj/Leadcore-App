@@ -17,3 +17,4 @@ button:disabled { opacity:.4; cursor:default; }
 .hint { color:var(--mute); font-size:.82rem; } .warn { color:var(--warn); font-size:.85rem; margin-top:4px; }
 table { width:100%; border-collapse:collapse; font-size:.9rem; } td, th { text-align:left; padding:6px 4px; border-bottom:1px solid #1d4457; }
 ul { padding-left:18px; margin:4px 0; } .tag { margin-left:6px; font-size:.7rem; background:#1d4457; padding:1px 6px; border-radius:8px; color:var(--mute); }
+a { color: var(--acc); }

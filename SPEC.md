@@ -53,3 +53,9 @@ Web search returned mostly scraped/SEO pages; the two substantive forum sources 
 - Regression works in feet of leadcore out (continuous), not whole colors.
 - Depth data source: Garmin LiveScope readings logged per lure/rig.
 - Per-lure curves: hierarchical Bayesian ridge (global line -> lure type -> lure model -> rig offset) with partial pooling and prediction bands.
+
+## Engine (implemented in `src/engine`)
+- Leader is a free input: material (fluorocarbon/mono/braid/wire/other), length (ft), optional test (lb). Each material has its own length coefficient; test lb scales drag. Priors are unverified and learn from data.
+- Model: Bayesian linear regression on `ln(depth / leadcoreOut)`; params for line, lure type, lure model, attractor, rig. Physical constraints (faster = shallower, more line = deeper) enforced per lure.
+- API: `fitModel(observations)`, `predictDepth(model, config, counterFt)`, `solveCounter(model, config, targetDepthFt)` with 80% band.
+- Not yet modelled: rod angle/holder, current/wind/turns, thermocline mode, counter correction factor (not separable from the dive curve).

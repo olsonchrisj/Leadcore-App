@@ -253,7 +253,7 @@ export function App() {
         </section>
       )}
 
-      {tab === "lures" && <Lures lures={lures} atts={atts} addLure={(l) => setCustomLures([...customLures, l])} addAtt={(a) => setCustomAtts([...customAtts, a])} />}
+      {tab === "lures" && <Lures lures={lures} atts={atts} addLure={(l) => setCustomLures([...customLures, l])} addAtt={(a) => setCustomAtts([...customAtts, a])} removeCustom={(id) => { setCustomLures(customLures.filter((l) => l.id !== id)); setCustomAtts(customAtts.filter((a) => a.id !== id)); }} />}
     </main>
   );
 }
@@ -263,10 +263,12 @@ function Lures(props: {
   atts: AttractorEntry[];
   addLure: (l: LureEntry) => void;
   addAtt: (a: AttractorEntry) => void;
+  removeCustom: (id: string) => void;
 }) {
   const [q, setQ] = useState("");
   const [brand, setBrand] = useState("");
   const [name, setName] = useState("");
+  const [weight, setWeight] = useState<number | null>(null);
   const [type, setType] = useState<LureType>("spoon");
   const [isAtt, setIsAtt] = useState(false);
   const [attType, setAttType] = useState<AttractorType>("flasher");
@@ -275,8 +277,9 @@ function Lures(props: {
     if (!name.trim()) return;
     const id = slug(`${brand} ${name}`);
     if (isAtt) props.addAtt({ id, brand: brand.trim() || "Custom", name: name.trim(), type: attType, custom: true });
-    else props.addLure({ id, brand: brand.trim() || "Custom", name: name.trim(), type, custom: true });
+    else props.addLure({ id, brand: brand.trim() || "Custom", name: name.trim(), type, weightOz: weight ?? undefined, custom: true });
     setName("");
+    setWeight(null);
   };
   return (
     <section>
@@ -292,6 +295,7 @@ function Lures(props: {
             <option value="att">attractor</option>
           </select>
         </label>
+        {!isAtt && <NumInput label="Weight" suffix="oz, optional" optional step={0.05} value={weight} onChange={setWeight} />}
         {isAtt && (
           <label className="field"><span>Attractor type</span>
             <select value={attType} onChange={(e) => setAttType(e.target.value as AttractorType)}>{ATTR_TYPES.map((t) => <option key={t}>{t}</option>)}</select>
@@ -300,9 +304,9 @@ function Lures(props: {
       </div>
       <button className="primary" onClick={add}>Add</button>
       <h3>Lures ({props.lures.length})</h3>
-      <ul>{props.lures.filter((l) => match(`${l.brand} ${l.name} ${l.type}`)).map((l) => <li key={l.id}>{l.brand} {l.name} <span className="tag">{l.type}</span>{l.custom && <span className="tag">custom</span>}{(l.weightOz || l.ratedDive) && <div className="hint">{[l.weightOz && `${l.weightOz.toFixed(2)} oz`, l.lengthIn && `${l.lengthIn}"`, l.ratedDive && `rated dive ${l.ratedDive.min ? l.ratedDive.min + "–" : "≤"}${l.ratedDive.max} ft (not leadcore)`].filter(Boolean).join(" · ")}{l.source && <> · <a href={l.source} target="_blank" rel="noreferrer">source</a></>}</div>}</li>)}</ul>
+      <ul>{props.lures.filter((l) => match(`${l.brand} ${l.name} ${l.type}`)).map((l) => <li key={l.id}>{l.brand} {l.name} <span className="tag">{l.type}</span>{l.custom && <><span className="tag">custom</span> <button onClick={() => props.removeCustom(l.id)}>✕</button></>}{(l.weightOz || l.ratedDive) && <div className="hint">{[l.weightOz && `${l.weightOz.toFixed(2)} oz`, l.lengthIn && `${l.lengthIn}"`, l.ratedDive && `rated dive ${l.ratedDive.min ? l.ratedDive.min + "–" : "≤"}${l.ratedDive.max} ft (not leadcore)`].filter(Boolean).join(" · ")}{l.source && <> · <a href={l.source} target="_blank" rel="noreferrer">source</a></>}</div>}</li>)}</ul>
       <h3>Attractors</h3>
-      <ul>{props.atts.filter((a) => match(`${a.brand} ${a.name} ${a.type}`)).map((a) => <li key={a.id}>{a.brand} {a.name} <span className="tag">{a.type}</span></li>)}</ul>
+      <ul>{props.atts.filter((a) => match(`${a.brand} ${a.name} ${a.type}`)).map((a) => <li key={a.id}>{a.brand} {a.name} <span className="tag">{a.type}</span>{a.custom && <button onClick={() => props.removeCustom(a.id)}>✕</button>}</li>)}</ul>
     </section>
   );
 }

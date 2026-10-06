@@ -58,9 +58,6 @@ export interface Observation extends RigConfig {
   depthFt: number;
   /** Relative reliability, default 1 (higher = trusted more). */
   quality?: number;
-  /** Not modelled; kept for later analysis. */
-  waterTempF?: number;
-  note?: string;
   /** ISO timestamp. */
   takenAt?: string;
 }

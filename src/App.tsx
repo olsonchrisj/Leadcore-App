@@ -18,9 +18,7 @@ interface RigForm {
   speedMph: number;
   leaderMaterial: LeaderMaterial;
   leaderFt: number;
-  leaderTestLb: number;
   lureId: string;
-  lureWeightOz: number | null;
   attractorId: string;
 }
 
@@ -35,19 +33,13 @@ const DEFAULT_RIG: RigForm = {
   speedMph: 2,
   leaderMaterial: "fluorocarbon",
   leaderFt: 50,
-  leaderTestLb: 12,
   lureId: LURES[0]!.id,
-  lureWeightOz: null,
   attractorId: "",
 };
 
 const LURE_TYPES: LureType[] = ["spoon", "crankbait", "stickbait", "diver", "plug", "spinner", "softbait"];
 const ATTR_TYPES: AttractorType[] = ["flasher", "dodger", "fly", "other"];
 const MATERIALS: LeaderMaterial[] = ["fluorocarbon", "monofilament", "braid", "wire", "other"];
-const LINES = [
-  { id: "suffix-832", label: "Suffix 832 Advanced Lead Core" },
-  { id: "generic-leadcore", label: "Other leadcore (generic prior)" },
-];
 
 const fmt = (n: number, d = 1) => (Number.isFinite(n) ? n.toFixed(d) : "–");
 
@@ -99,8 +91,6 @@ export function App() {
   const [target, setTarget] = useState<number | null>(30);
   const [counter, setCounter] = useState<number | null>(null);
   const [depth, setDepth] = useState<number | null>(null);
-  const [temp, setTemp] = useState<number | null>(null);
-  const [note, setNote] = useState("");
 
   const lures = useMemo(() => [...LURES, ...customLures], [customLures]);
   const atts = useMemo(() => [...ATTRACTORS, ...customAtts], [customAtts]);
@@ -109,12 +99,12 @@ export function App() {
   const set = <K extends keyof RigForm>(k: K, v: RigForm[K]) => setRig({ ...rig, [k]: v });
 
   const config: RigConfig = {
-    lineId: rig.lineId,
+    lineId: "suffix-832",
     leadcoreLengthFt: rig.leadcoreFt,
     speedMph: rig.speedMph,
-    lure: { id: lure.id, type: lure.type, weightOz: rig.lureWeightOz ?? lure.weightOz },
+    lure: { id: lure.id, type: lure.type, weightOz: lure.weightOz },
     attractor: att ? { id: att.id, type: att.type } : undefined,
-    leader: { material: rig.leaderMaterial, lengthFt: rig.leaderFt, testLb: rig.leaderTestLb || undefined },
+    leader: { material: rig.leaderMaterial, lengthFt: rig.leaderFt },
   };
 
   const model = useMemo(() => fitModel(readings, { estimateNoise: readings.length >= 6 }), [readings]);
@@ -131,12 +121,9 @@ export function App() {
       takenAt: new Date().toISOString(),
       counterFt: counter,
       depthFt: depth,
-      waterTempF: temp ?? undefined,
-      note: note || undefined,
     };
     setReadings([r, ...readings]);
     setDepth(null);
-    setNote("");
   };
 
   const exportAll = () =>
@@ -160,15 +147,6 @@ export function App() {
     }
   };
 
-  const exportCsv = () => {
-    const head = "takenAt,lure,attractor,speedMph,counterFt,depthFt,leaderMaterial,leaderFt,leaderTestLb,waterTempF,note";
-    const rows = readings.map((r) =>
-      [r.takenAt, r.lure.id, r.attractor?.id ?? "", r.speedMph, r.counterFt, r.depthFt, r.leader.material,
-        r.leader.lengthFt, r.leader.testLb ?? "", r.waterTempF ?? "", JSON.stringify(r.note ?? "")].join(","),
-    );
-    download("leadcore-readings.csv", [head, ...rows].join("\n"), "text/csv");
-  };
-
   return (
     <main>
       <h1>Leadcore Calculator</h1>
@@ -184,12 +162,6 @@ export function App() {
         <>
           <section>
             <h2>Rig</h2>
-            <label className="field">
-              <span>Leadcore</span>
-              <select value={rig.lineId} onChange={(e) => set("lineId", e.target.value)}>
-                {LINES.map((l) => <option key={l.id} value={l.id}>{l.label}</option>)}
-              </select>
-            </label>
             <div className="grid">
               <NumInput label="Leadcore on reel" suffix="ft" value={rig.leadcoreFt} onChange={(v) => set("leadcoreFt", v ?? 0)} />
               <NumInput label="Speed" suffix="mph" step={0.1} value={rig.speedMph} onChange={(v) => set("speedMph", v ?? 0)} />
@@ -202,7 +174,6 @@ export function App() {
                 </select>
               </label>
               <NumInput label="Leader length" suffix="ft" value={rig.leaderFt} onChange={(v) => set("leaderFt", v ?? 0)} />
-              <NumInput label="Leader test" suffix="lb" value={rig.leaderTestLb} onChange={(v) => set("leaderTestLb", v ?? 0)} />
             </div>
             <label className="field">
               <span>Lure</span>
@@ -213,7 +184,6 @@ export function App() {
               </select>
             </label>
             <div className="grid">
-              <NumInput label="Lure weight" suffix="oz, optional" optional step={0.05} value={rig.lureWeightOz} onChange={(v) => set("lureWeightOz", v)} />
               <label className="field">
                 <span>Attractor</span>
                 <select value={rig.attractorId} onChange={(e) => set("attractorId", e.target.value)}>
@@ -250,18 +220,11 @@ export function App() {
 
           <section>
             <h2>Log a reading</h2>
-            <p className="hint">Enter the counter and what LiveScope shows for the current setup above.</p>
             <div className="grid">
               <NumInput label="Counter" suffix="ft" value={counter} optional onChange={setCounter} />
               <NumInput label="Depth (LiveScope)" suffix="ft" value={depth} optional onChange={setDepth} />
-              <NumInput label="Water temp" suffix="°F, optional" value={temp} optional onChange={setTemp} />
             </div>
-            <label className="field">
-              <span>Note</span>
-              <input value={note} onChange={(e) => setNote(e.target.value)} />
-            </label>
             {forward && <div className="hint">Model expected {fmt(forward.depthFt)} ft ({fmt(forward.lowFt)}–{fmt(forward.highFt)}).</div>}
-            {plan && <button onClick={() => setCounter(Math.round(plan.counterFt))}>Use planned counter</button>}{" "}
             <button className="primary" disabled={!counter || !depth || !valid} onClick={saveReading}>Save reading</button>
           </section>
         </>
@@ -270,13 +233,8 @@ export function App() {
       {tab === "readings" && (
         <section>
           <h2>Readings</h2>
-          <p className="hint">
-            {model.nObservations} used in the fit · noise σ ≈ {fmt(model.sigma * 100, 0)}%
-            {model.pinned.length > 0 && ` · physical limits applied to ${model.pinned.length} term(s)`}
-          </p>
           <div className="row">
             <button onClick={exportAll}>Export JSON</button>
-            <button onClick={exportCsv} disabled={!readings.length}>Export CSV</button>
             <label className="button">Import JSON<input type="file" accept="application/json" hidden onChange={(e) => e.target.files?.[0] && importAll(e.target.files[0])} /></label>
           </div>
           <table>
@@ -284,7 +242,7 @@ export function App() {
             <tbody>
               {readings.map((r) => (
                 <tr key={r.id}>
-                  <td>{r.lure.id}{r.attractor ? ` + ${r.attractor.id}` : ""}<div className="hint">{r.takenAt.slice(0, 10)} · {r.leader.material} {r.leader.lengthFt} ft{r.note ? ` · ${r.note}` : ""}</div></td>
+                  <td>{r.lure.id}{r.attractor ? ` + ${r.attractor.id}` : ""}<div className="hint">{r.takenAt.slice(0, 10)} · {r.leader.material} {r.leader.lengthFt} ft</div></td>
                   <td>{r.speedMph}</td><td>{fmt(r.counterFt, 0)}</td><td>{fmt(r.depthFt)}</td>
                   <td><button onClick={() => setReadings(readings.filter((x) => x.id !== r.id))}>✕</button></td>
                 </tr>
@@ -323,7 +281,6 @@ function Lures(props: {
   return (
     <section>
       <h2>Lures</h2>
-      <p className="hint">Names and types only, compiled from memory: no weights or dive specs. Per-lure behaviour comes from your readings.</p>
       <label className="field"><span>Search</span><input value={q} onChange={(e) => setQ(e.target.value)} /></label>
       <h3>Add custom</h3>
       <div className="grid">

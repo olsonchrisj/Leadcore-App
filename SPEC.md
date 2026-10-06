@@ -61,5 +61,5 @@ Web search returned mostly scraped/SEO pages; the two substantive forum sources 
 - Not yet modelled: rod angle/holder, current/wind/turns, thermocline mode, counter correction factor (not separable from the dive curve).
 
 ## UI (implemented)
-Vite + React PWA, data in localStorage. Calculator tab: rig (line, leadcore on reel, speed, leader material/length/test, lure, optional weight, attractor), plan (target depth -> counter with 80% range), log reading (counter + LiveScope depth, optional water temp/note). Readings tab: list/delete, JSON import/export, CSV export. Lures tab: names/types only, search, custom lures/attractors. Water temp is logged but not modelled. Rod angle, holder, current, turns dropped by decision (lake fishing).
+Vite + React PWA, data in localStorage. Calculator tab: rig (leadcore on reel, speed, leader material/length, lure, attractor), plan (target depth -> counter with 80% range), log reading (counter + LiveScope depth). Readings tab: list/delete, JSON import/export. Suffix 832 only. Lures tab: names/types only, search, custom lures/attractors. Water temp, notes, leader test and lure weight inputs removed (decluttered). Rod angle, holder, current, turns dropped by decision (lake fishing).
 Not yet: metric toggle, thermocline/target-depth helper, offline install testing on a phone.

@@ -6,7 +6,7 @@ Given speed, leadcore (brand + weight), backing, leader, lure/attractor, rod set
 ## Decisions from interview
 - Platform: installable PWA, offline-capable, data stored locally. Stack: Vite + React + TypeScript.
 - Method: empirical baseline tables + interpolation, corrected by a per-rig calibration offset.
-- Output: colors (10 yd each) plus feet/yards; imperial/metric toggle.
+- Output: counter reading in feet (primary), with colors (10 yd each) as a derived label; imperial/metric toggle.
 - Fishery focus: inland lakes (walleye, trout, kokanee); presets/defaults biased accordingly.
 - Lures: built-in database + user-defined custom entries. Types: spoons & flasher/fly rigs, crankbaits & stickbaits, Dipsy/diver-type, plugs/jigs/soft baits (hootchies, squid, bucktails).
 - Rig inputs: leadcore brand + weight (18/27/36/45 lb), backing type/diameter, rod angle & holder position, leader length/material/test.
@@ -44,3 +44,12 @@ Web search returned mostly scraped/SEO pages; the two substantive forum sources 
 ## Open items
 - Data sourcing: user-supplied tables vs. further research (need unblocked sources or manufacturer PDFs).
 - Confirm exact brands the user fishes (to prioritize table entry).
+
+## Reel counter model (user setup)
+- Counter reads feet and is zeroed when the leadcore reaches the rod tip, so the counter equals leadcore out (leader and lure are already out and not counted).
+- Leadcore is spliced directly to backing; 100 yd (300 ft, 10 colors) spooled. Counter > 300 ft means backing is out: `leadcore_out = min(counter, leadcoreLengthFt)`, `backing_out = max(counter - leadcoreLengthFt, 0)`.
+- Leader length is a separate rig input (affects depth/drag, not the counter).
+- Counter accuracy is a fitted calibration factor, separate from the dive curve; the user can pin it if checked against a measured length.
+- Regression works in feet of leadcore out (continuous), not whole colors.
+- Depth data source: Garmin LiveScope readings logged per lure/rig.
+- Per-lure curves: hierarchical Bayesian ridge (global line -> lure type -> lure model -> rig offset) with partial pooling and prediction bands.

@@ -59,3 +59,7 @@ Web search returned mostly scraped/SEO pages; the two substantive forum sources 
 - Model: Bayesian linear regression on `ln(depth / leadcoreOut)`; params for line, lure type, lure model, attractor, rig. Physical constraints (faster = shallower, more line = deeper) enforced per lure.
 - API: `fitModel(observations)`, `predictDepth(model, config, counterFt)`, `solveCounter(model, config, targetDepthFt)` with 80% band.
 - Not yet modelled: rod angle/holder, current/wind/turns, thermocline mode, counter correction factor (not separable from the dive curve).
+
+## UI (implemented)
+Vite + React PWA, data in localStorage. Calculator tab: rig (line, leadcore on reel, speed, leader material/length/test, lure, optional weight, attractor), plan (target depth -> counter with 80% range), log reading (counter + LiveScope depth, optional water temp/note). Readings tab: list/delete, JSON import/export, CSV export. Lures tab: names/types only, search, custom lures/attractors. Water temp is logged but not modelled. Rod angle, holder, current, turns dropped by decision (lake fishing).
+Not yet: metric toggle, thermocline/target-depth helper, offline install testing on a phone.

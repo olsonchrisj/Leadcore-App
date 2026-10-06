@@ -19,7 +19,8 @@ export type LureType =
   | "stickbait"
   | "diver"
   | "plug"
-  | "softbait";
+  | "softbait"
+  | "spinner";
 
 export type AttractorType = "flasher" | "dodger" | "fly" | "other";
 
@@ -57,6 +58,11 @@ export interface Observation extends RigConfig {
   depthFt: number;
   /** Relative reliability, default 1 (higher = trusted more). */
   quality?: number;
+  /** Not modelled; kept for later analysis. */
+  waterTempF?: number;
+  note?: string;
+  /** ISO timestamp. */
+  takenAt?: string;
 }
 
 export interface PriorSpec {

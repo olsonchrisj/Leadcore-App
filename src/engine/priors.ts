@@ -21,6 +21,7 @@ const LURE_TYPE_ICPT: Record<string, number> = {
   diver: -0.15,
   plug: -0.04,
   softbait: 0,
+  spinner: -0.02,
 };
 
 const ATTRACTOR_TYPE_ICPT: Record<string, number> = {

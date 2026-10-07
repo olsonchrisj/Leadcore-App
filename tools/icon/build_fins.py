@@ -10,6 +10,20 @@ def curved(b, t, bend, n=14):
     nrm = np.array([-d[1], d[0]]) / L
     return bez(b, (b + t) / 2 + nrm * bend * L, t, n)
 
+def wavy(b, t, bend=0.0, amp=0.012, phase=0.0, n=16):
+    """Base->tip ray with a gentle S-bend, so fins don't look ruled."""
+    b = np.asarray(b, np.float32); t = np.asarray(t, np.float32)
+    d = t - b; L = np.hypot(*d) + 1e-6; nrm = np.array([-d[1], d[0]]) / L
+    u = np.linspace(0, 1, n)[:, None]
+    return b + d * u + nrm * (bend * L * np.sin(np.pi * u) + amp * L * np.sin(2 * np.pi * 1.15 * u + phase) * np.sin(np.pi * u))
+
+def jitter_tips(bases, tips, sd=.03):
+    out = []
+    for b_, t_ in zip(bases, tips):
+        d = t_ - b_
+        out.append(b_ + d * (1 + RNG.normal(0, sd)) + np.array([-d[1], d[0]]) / (np.hypot(*d) + 1e-6) * RNG.normal(0, sd * .35) * np.hypot(*d))
+    return out
+
 def scalloped(bases, tips, sag):
     """Outline: bases left->right then tips back right->left joined by concave arcs."""
     out = [bases[0]]
@@ -45,9 +59,10 @@ def make_fins():
     lean = .36
     base = [P(x, TOP(x) + .007) for x in Xb]
     tips = [P(x + h * lean, TOP(x) - h) for x, h in zip(Xb, hs)]
-    outline = scalloped(base, tips, .055)
+    tips = jitter_tips(base, tips, .035)
+    outline = scalloped(base, tips, .13)
     outline = [outline[0]] + outline[1:-1] + [P(Xb[-1] + .018, TOP(Xb[-1] + .018) + .006), outline[-1]]
-    rays = [curved(b, t, RNG.normal(0, .015), 8) for b, t in zip(base, tips)]
+    rays = [wavy(b, t, RNG.normal(0, .02), .010, RNG.uniform(0, 6.3), 12) for b, t in zip(base, tips)]
     spots = []
     for k in range(n - 1):
         for (fy, r) in [(.30, 4.2), (.52, 5.4), (.70, 3.6)]:
@@ -74,8 +89,9 @@ def make_fins():
     hs = (.040 * (1 - t_) ** .9 + .016) * (1 + RNG.normal(0, .02, n))
     base = [P(x, TOP(x) + .006) for x in Xb]
     tips = [P(x + h * .38, TOP(x) - h) for x, h in zip(Xb, hs)]
-    rays = [curved(b, t, -.07 * (1 - tt) - .02, 12) for b, t, tt in zip(base, tips, t_)]
-    outline = scalloped(base, tips, .04)
+    tips = jitter_tips(base, tips, .03)
+    rays = [wavy(b, t, -.07 * (1 - tt) - .02, .012, RNG.uniform(0, 6.3), 14) for b, t, tt in zip(base, tips, t_)]
+    outline = scalloped(base, tips, .09)
     spots = []
     for k in range(1, n - 1):
         for fy in (.30, .58):
@@ -101,7 +117,7 @@ def make_fins():
     for k in range(n):
         b0 = P(base_x, by[k]); tl, tr = tips[2 * k], tips[2 * k + 1]; tm = (tl + tr) / 2
         fork = b0 + (tm - b0) * .58
-        rays.append((curved(b0, fork, RNG.normal(0, .008), 8), 1.0, .62)); rays.append((np.array([fork, tl]), .62, .30)); rays.append((np.array([fork, tr]), .62, .30))
+        rays.append((wavy(b0, fork, RNG.normal(0, .006), .008, RNG.uniform(0, 6.3), 9), 1.0, .62)); rays.append((np.array([fork, tl]), .62, .30)); rays.append((np.array([fork, tr]), .62, .30))
     spots = []
     for k in range(n):
         r = rays[3 * k][0]
@@ -124,8 +140,9 @@ def make_fins():
     hs = (.044 * (1 - .78 * t_ ** 1.7) + .004)
     base = [P(x, BOT(x) - .006) for x in Xb]
     tips = [P(x + h * .50, BOT(x) + h) for x, h in zip(Xb, hs)]
-    rays = [curved(b, t, .06 * (1 - tt) + .015, 12) for b, t, tt in zip(base, tips, t_)]
-    outline = scalloped(base, tips, .04)
+    tips = jitter_tips(base, tips, .03)
+    rays = [wavy(b, t, .06 * (1 - tt) + .015, .010, RNG.uniform(0, 6.3), 14) for b, t, tt in zip(base, tips, t_)]
+    outline = scalloped(base, tips, .09)
     top_y = max(t[1] for t in tips); base_y = np.mean([b[1] for b in base])
     fin_common(L_back, outline, rays, '#d4c785', '#f5f0dd', .68, '#7a6a2a', .5,
                lambda xx, yy: (yy - base_y) / (top_y - base_y + 1e-6), ray_w=1.9, glow=.06, edge_col='#fbf8ee', edge_w=.14)
@@ -138,27 +155,31 @@ def make_fins():
     lead_tip = P(.350, BOT(.316) + .066)
     rear_tip = P(.366, BOT(.340) + .018)
     tipsP = [lead_tip + (rear_tip - lead_tip) * (i / (n - 1)) ** 1.2 + np.array([0, -8 * np.sin(np.pi * i / (n - 1))]) for i in range(n)]
-    rays = [curved(b, t, .05 + .02 * i / n, 10) for i, (b, t) in enumerate(zip(base, tipsP))]
+    rays = [wavy(b, t, .05 + .02 * i / n, .010, RNG.uniform(0, 6.3), 12) for i, (b, t) in enumerate(zip(base, tipsP))]
     outline = list(base) + list(bez(tipsP[-1], (tipsP[-1] + tipsP[0]) / 2 + np.array([10, 14]), tipsP[0], 10)) 
     top_y = max(t[1] for t in tipsP); base_y = np.mean([b[1] for b in base])
     fin_common(L_back, outline, rays, '#d9c768', '#f4efdc', .74, '#7a6a2a', .5,
                lambda xx, yy: (yy - base_y) / (top_y - base_y + 1e-6), ray_w=2.0, glow=.10, edge_col='#fbf8ee', edge_w=.20)
 
-    # ============================================================ pectoral (in front, pointing back)
-    n = 15
-    pivot = P(.272, .046)
-    ang = np.linspace(-.18, .50, n)
+    # ============================================================ pectoral (in front, tucked under the gill cover)
+    n = 17
+    pivot = P(.259, .049)
+    ang = np.linspace(-.30, .56, n)
     rays = []
     for k, a_ in enumerate(ang):
-        Lr = (.074 - .014 * ((a_ - .16) / .40) ** 2) * TL
+        Lr = (.088 - .020 * ((a_ - .13) / .45) ** 2) * TL * (1 + RNG.normal(0, .02))
         d = np.array([np.cos(a_), np.sin(a_)])
-        b = pivot + np.array([0, (k - n / 2) * 2.2])
-        t = b + d * Lr
-        rays.append(curved(b, t, .035, 10))
-    outline = [r[0] for r in rays] + [r[-1] for r in rays[::-1]]
-    fin_common(L_front, outline, rays, '#cdb95a', '#eee3b0', .50, '#6a5a1f', .42,
-               lambda xx, yy: np.sqrt((xx - pivot[0]) ** 2 + (yy - pivot[1]) ** 2) / (.078 * TL), ray_w=1.9, glow=.16)
-    base_cover(L_front, outline, [rays[0][0], rays[-1][0]], 14, '#b79e3e', .7)
+        b0 = pivot + np.array([0, (k - n / 2) * 2.4])
+        t = b0 + d * Lr
+        rays.append(wavy(b0, t, .04, .010, RNG.uniform(0, 6.3), 12))
+    tips_ = [r[-1] for r in rays]
+    outline = scalloped([r[0] for r in rays], tips_, .045)
+    fin_common(L_front, outline, rays, '#bda545', '#e6d996', .56, '#5f5018', .55,
+               lambda xx, yy: np.sqrt((xx - pivot[0]) ** 2 + (yy - pivot[1]) ** 2) / (.090 * TL), ray_w=2.0, glow=.16)
+    bb, xx, yy = bbox_grid(outline, 8); y0, y1, x0, x1 = bb
+    spot = np.exp(-(((xx - (pivot[0] + 16)) / 26) ** 2 + ((yy - pivot[1]) / 15) ** 2) ** 1.4)
+    paint(L_front, bb, np.ones(spot.shape + (3,), np.float32) * srgb('#241c08')[None, None], spot * .60 * fin_mask(outline)[y0:y1, x0:x1])
+    base_cover(L_front, outline, [rays[0][0], rays[-1][0]], 16, '#a68f3a', .75)
     return L_back, L_front
 
 if __name__ == '__main__':

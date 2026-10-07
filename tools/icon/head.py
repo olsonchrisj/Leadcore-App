@@ -54,6 +54,8 @@ class HeadGeom:
         # beyond the mouth corner the gape line stops
         self.past_corner = sstep(GAPE[-1][0] - 4, GAPE[-1][0] + 8, xx)
         self.oper = sstep(-1.5, 1.5, -self.sd_pre) * sstep(-1.5, 1.5, self.sd_rear)       # operculum plate
+        # the small flat spine on the upper rear corner of the gill cover
+        self.spine = poly_mask([(px(.2405), py(-.0605)), (px(.2705), py(-.0495)), (px(.2455), py(-.0345))])
         self.cheek = sstep(-1.5, 1.5, self.sd_pre) * (1 - sstep(-3, 3, np.sqrt((xx - EYE[0]) ** 2 + (yy - EYE[1]) ** 2) - EYE_R * 1.15))
         deye = np.sqrt((xx - EYE[0]) ** 2 + (yy - EYE[1]) ** 2)
         self.deye = deye

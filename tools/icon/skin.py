@@ -122,6 +122,11 @@ class Skin:
         alb = alb * (1 - freckle[..., None]) + dark * freckle[..., None]
         # per-scale tint, soft shadow behind every ledge, tiny rim highlight on the rear edge
         alb = alb * (1 + 0.09 * (rnd - .5) * 2 * head_fade)[..., None]
+        # per-scale hue drift (some scales greener, some more red-gold) and a brassy lateral band
+        h2 = (hash2(sc['i'], sc['j'], seed + 7) - .5) * 2
+        alb = alb * np.stack([1 + 0.045 * h2, 1 + 0.012 * h2, 1 - 0.10 * h2], -1) * 1.0
+        band = np.exp(-((v - .44) / .12) ** 2)[..., None] * sstep(.12, .3, Xc)[..., None]
+        alb = alb * (1 + 0.09 * band * np.array([1.0, .90, .35], np.float32))
         alb = alb * (1 - 0.30 * (sc['shadow'] * head_fade))[..., None]
         # lateral line: dark pore on the rear of each scale in the row nearest v~0.40
         latrow = np.round(0.40 * n_rows - 0.5)

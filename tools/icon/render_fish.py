@@ -30,6 +30,9 @@ def render_fish(force=False):
     # the pectoral fin casts a soft shadow on the flank
     sh = nd_shift(gaussian_filter(Lf.a, 9), (9, 6), order=1)
     pr = pr * (1 - 0.42 * sh[..., None] * a_body[..., None])
+    # the pectoral fin disappears under the gill cover
+    tuck = sstep(-1.0, 3.0, -g.sd_rear)
+    Lf.rgb = Lf.rgb * tuck[..., None]; Lf.a = Lf.a * tuck
     pr = Lf.rgb + pr * (1 - Lf.a[..., None]); pa = Lf.a + pa * (1 - Lf.a)
     np.savez_compressed(CACHE, rgb=pr.astype(np.float32), a=pa.astype(np.float32))
     return pr.astype(np.float32), pa.astype(np.float32)

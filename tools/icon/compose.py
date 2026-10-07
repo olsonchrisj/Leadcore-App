@@ -11,7 +11,7 @@ S = 2048                      # working canvas (downsampled 2x to 1024)
 VARIANTS = {
     # name: (scale, rot, nose target in scene px, cord hw, crimp hw, leader hw, ferrule offset from nose)
     'full':  dict(scale=1.00, rot=8.0,  nose=(150.0, 1030.0), cord_hw=19.0, crimp_hw=17.5, lead_hw=2.6, ferrule=(-10.0, -310.0)),
-    'close': dict(scale=1.66, rot=9.0,  nose=(170.0, 1010.0), cord_hw=26.0, crimp_hw=23.0, lead_hw=3.4, ferrule=(-14.0, -430.0)),
+    'close': dict(scale=1.90, rot=11.0, nose=(135.0, 985.0), cord_hw=28.0, crimp_hw=25.0, lead_hw=3.7, ferrule=(-8.0, -430.0)),
 }
 V = dict(VARIANTS['full'])
 SCALE = V['scale']; ROT = V['rot']
@@ -105,6 +105,13 @@ def place_fish(base):
     sh = gaussian_filter(a, 38)
     sh = np.roll(np.roll(sh, 70, axis=0), -10, axis=1)
     base = base * (1 - 0.30 * sh[..., None])
+    # shallow depth of field: sharp head, progressively softer body toward the right edge
+    if V.get('dof', True) and SCALE > 1.5:
+        a_p = a.copy(); blur_a = gaussian_filter(a, 4.0)
+        blur_c = np.stack([gaussian_filter(prm[..., ch], 4.0) for ch in range(3)], -1)
+        wdof = sstep(1250, 2100, xx) * 0.85
+        prm = prm * (1 - wdof[..., None]) + blur_c * wdof[..., None]
+        a = a * (1 - wdof) + blur_a * wdof
     cz = caustics()
     wtop = np.clip(1 - (yy - 780) / 760, 0, 1) ** 1.1
     prm = prm * (1 + 0.20 * (cz * wtop)[..., None])
@@ -246,9 +253,9 @@ def build(zoom=1.0):
     mouth = to_scene(mouth_open_point())
     k = zoom
     ferrule = mouth + np.array(V['ferrule'], np.float32) * k
-    top_y = -120.0 if zoom >= .999 else -1800.0
-    P0 = np.array([ferrule[0] + 420.0 * k, top_y]); P3 = ferrule
-    path = bezier(P0, P0 + np.array([0, 520.0 * k + (0 if zoom >= .999 else 900.0)]), P3 + np.array([40.0 * k, -420.0 * k]), P3, 1800)
+    top_y = -140.0 if zoom >= .999 else -1800.0
+    P0 = np.array([ferrule[0] + 190.0 * k, top_y]); P3 = ferrule
+    path = bezier(P0, P0 + np.array([-30.0 * k, 420.0 * k + (0 if zoom >= .999 else 900.0)]), P3 + np.array([26.0 * k, -330.0 * k]), P3, 1800)
     img = draw_cord(img, path, hw=V['cord_hw'] * k, seg_len=152.0 * V['cord_hw'] / 19.0 * k)
     tangent = path[-1] - path[-6]
     img, crimp_end = draw_crimp(img, path[-1] - tangent / np.linalg.norm(tangent) * 6 * k, tangent, length=62.0 * V['crimp_hw'] / 17.5 * k, hw=V['crimp_hw'] * k)

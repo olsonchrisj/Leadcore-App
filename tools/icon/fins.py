@@ -75,7 +75,7 @@ def soft_disc(xx, yy, cx, cy, r, soft=.5):
     return 1 - sstep(r * (1 - soft), r, d)
 
 def fin_common(layer, outline, rays, base_col, tip_col, mem_a, ray_col, ray_a, t_of, spots=None,
-               ray_w=2.6, glow=0.0, edge_col=None, edge_w=0.0, fade_base=0.0, fade_x=None):
+               ray_w=2.6, glow=0.0, edge_col=None, edge_w=0.0, fade_base=0.0, fade_x=None, hl=0.22, edge_hl=0.18):
     """Generic translucent fin. t_of(xx,yy)->0 at base, 1 at outer edge."""
     bb, xx, yy = bbox_grid(outline)
     y0, y1, x0, x1 = bb
@@ -92,6 +92,14 @@ def fin_common(layer, outline, rays, base_col, tip_col, mem_a, ray_col, ray_a, t
     mot = gaussian_filter(np.random.default_rng(int(xx.mean()) % 997).standard_normal(xx.shape).astype(np.float32), 6)
     mot = mot / (mot.std() + 1e-6)
     rgb = rgb * (1 + 0.16 * bulge[..., None] + 0.07 * mot[..., None])
+    if hl > 0:                                   # specular glint running along each ray, on the lit side
+        sh = np.array([-1.7, -2.1], np.float32)
+        shifted = [((r[0] + sh, r[1] * .6, r[2] * .6) if isinstance(r, tuple) else r + sh) for r in rays]
+        hlf, _, _ = ray_field(xx, yy, shifted, w0=ray_w * .55)
+        rgb = rgb + (hlf * (1 - ray))[..., None] * np.array([.30, .27, .18], np.float32) * hl * 3.0
+    if edge_hl > 0:                              # light transmitted through the thin free edge
+        eh = sstep(.86, 1.0, t)
+        rgb = rgb + eh[..., None] * np.array([.30, .26, .12], np.float32) * edge_hl * (0.6 + 0.8 * mot[..., None] * 0 + 0.4)
     a = mem_a * (1 - fade_base * (1 - sstep(0, .35, t))) * (1 + 0.06 * bulge + 0.05 * mot) + ray_a * ray
     if edge_col is not None:
         e = sstep(1 - edge_w, 1.0, t); rgb = rgb * (1 - e[..., None]) + srgb(edge_col)[None, None] * e[..., None]

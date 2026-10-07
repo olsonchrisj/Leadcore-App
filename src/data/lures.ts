@@ -33,6 +33,22 @@ export interface AttractorEntry {
   custom?: boolean;
 }
 
+const natural = (a: string, b: string) => a.localeCompare(b, undefined, { sensitivity: "base", numeric: true });
+const SIZE_SUFFIX = /\s+\d[\d/.\- ]*\s*(oz|in)$/i;
+
+/** The model without its size: "Little Cleo 1/4 oz" -> "Little Cleo". Names without a size stay whole. */
+export const lureFamily = (name: string) => name.replace(SIZE_SUFFIX, "");
+
+/** Brand, then model, then size (weight, else length), so 1/8 oz sorts before 1/2 oz. */
+export function compareLures(a: LureEntry, b: LureEntry): number {
+  return (
+    natural(a.brand, b.brand) ||
+    natural(lureFamily(a.name), lureFamily(b.name)) ||
+    (a.weightOz ?? a.lengthIn ?? 0) - (b.weightOz ?? b.lengthIn ?? 0) ||
+    natural(a.name, b.name)
+  );
+}
+
 export const slug = (s: string) =>
   s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
@@ -47,6 +63,12 @@ const L = (brand: string, name: string, type: LureType, spec: Spec = {}): LureEn
   source: spec.src,
   mfrUrl: spec.mfr,
 });
+
+const CLEO = "https://www.acmetackle.com/products/little-cleo";
+const KAST = "https://www.acmetackle.com/products/kastmaster-plain-treble-hook-solid";
+const PHOEBE = "https://www.acmetackle.com/products/phoebe";
+const PHOEBE_SRC = "https://discounttackle.com/collections/all-products/products/acme-phoebe-spoon";
+const WOB_SRC = "https://uslures.com/collections/wob-l-rite-and-similar-spoons.html";
 
 /**
  * Commonly trolled lures. Names/types are from memory. Sizes, weights and
@@ -64,6 +86,34 @@ export const LURES: LureEntry[] = [
   L("Acme", "Little Cleo 1/4 oz", "spoon", { w: 0.25, src: "https://www.fishusa.com/ACME-Little-Cleo-Spoons/" , mfr: "https://www.acmetackle.com/products/little-cleo" }),
   L("Acme", "Little Cleo 1/3 oz", "spoon", { w: 1 / 3, src: "https://www.fishusa.com/ACME-Little-Cleo-Spoons/" , mfr: "https://www.acmetackle.com/products/little-cleo" }),
   L("Acme", "Little Cleo 3/4 oz", "spoon", { w: 0.75, src: "https://www.fishusa.com/ACME-Little-Cleo-Spoons/" , mfr: "https://www.acmetackle.com/products/little-cleo" }),
+  // Acme: the rest of the Little Cleo range, Kastmaster, Phoebe, Kamlooper (weights/lengths from Acme's own size lists
+  // unless a retailer link is given), plus two discontinued classics still in plenty of tackle boxes (Fiord, Wob-L-Rite).
+  L("Acme", "Little Cleo 1/8 oz", "spoon", { w: 1 / 8, mfr: CLEO }),
+  L("Acme", "Little Cleo 1/6 oz", "spoon", { w: 1 / 6, mfr: CLEO }),
+  L("Acme", "Little Cleo 2/5 oz", "spoon", { w: 2 / 5, mfr: CLEO }),
+  L("Acme", "Little Cleo 2/3 oz", "spoon", { w: 2 / 3, mfr: CLEO }),
+  L("Acme", "Little Cleo 1-1/4 oz", "spoon", { w: 1.25, mfr: CLEO }),
+  L("Acme", "Kastmaster 1/12 oz", "spoon", { w: 1 / 12, mfr: KAST }),
+  L("Acme", "Kastmaster 1/8 oz", "spoon", { w: 1 / 8, mfr: KAST }),
+  L("Acme", "Kastmaster 1/4 oz", "spoon", { w: 1 / 4, mfr: KAST }),
+  L("Acme", "Kastmaster 3/8 oz", "spoon", { w: 3 / 8, mfr: KAST }),
+  L("Acme", "Kastmaster 1/2 oz", "spoon", { w: 1 / 2, mfr: KAST }),
+  L("Acme", "Kastmaster 3/4 oz", "spoon", { w: 3 / 4, mfr: KAST }),
+  L("Acme", "Kastmaster 1 oz", "spoon", { w: 1, mfr: KAST }),
+  L("Acme", "Kastmaster XL 3/4 oz", "spoon", { w: 3 / 4, len: 3.5, mfr: "https://www.acmetackle.com/products/kastmaster-xl" }),
+  L("Acme", "Kastmaster XL 1-1/2 oz", "spoon", { w: 1.5, len: 4.5, mfr: "https://www.acmetackle.com/products/kastmaster-xl" }),
+  L("Acme", "Phoebe 1/12 oz", "spoon", { w: 1 / 12, len: 1.25, mfr: PHOEBE, src: PHOEBE_SRC }),
+  L("Acme", "Phoebe 1/8 oz", "spoon", { w: 1 / 8, len: 1.625, mfr: PHOEBE, src: PHOEBE_SRC }),
+  L("Acme", "Phoebe 1/6 oz", "spoon", { w: 1 / 6, len: 1.75, mfr: PHOEBE, src: PHOEBE_SRC }),
+  L("Acme", "Phoebe 1/4 oz", "spoon", { w: 1 / 4, len: 2, mfr: PHOEBE, src: PHOEBE_SRC }),
+  L("Acme", "Kamlooper 3/8 oz", "spoon", { w: 3 / 8, len: 1.875, mfr: "https://www.acmetackle.com/products/kamlooper", src: "https://www.fishusa.com/Acme-Kamlooper-Casting-Spoon/" }),
+  L("Acme", "Kamlooper 3/4 oz", "spoon", { w: 3 / 4, len: 2.375, mfr: "https://www.acmetackle.com/products/kamlooper", src: "https://www.fishusa.com/Acme-Kamlooper-Casting-Spoon/" }),
+  L("Acme", "Fiord Spoon 1/4 oz", "spoon", { w: 1 / 4, len: 1.75, src: "https://uslures.com/acme.html" }),
+  L("Acme", "Fiord Spoon 1/2 oz", "spoon", { w: 1 / 2, len: 2.25, src: "https://uslures.com/acme.html" }),
+  L("Acme", "Fiord Spoon 1-1/2 oz", "spoon", { w: 1.5, len: 4.25, src: "https://uslures.com/acme.html" }),
+  L("Acme", "Wob-L-Rite 1/4 oz", "spoon", { w: 1 / 4, src: WOB_SRC }),
+  L("Acme", "Wob-L-Rite 5/16 oz", "spoon", { w: 5 / 16, src: WOB_SRC }),
+  L("Acme", "Wob-L-Rite 1/2 oz", "spoon", { w: 1 / 2, src: WOB_SRC }),
   L("Eppinger", "Dardevle", "spoon"),
   L("Eppinger", "Dardevle Imp Klicker", "spoon", { w: 0.4, len: 2.25, src: "https://uslures.com/dardevle-imp-klicker-22370.html" , mfr: "https://dardevle.com/product/dardevle-imp-klicker-2-5oz/" }),
   L("Eppinger", "Dardevle Devle Dog", "spoon", { w: 1 / 3, len: 2, src: "https://uslures.com/dardevle-devle-dog-5300-0409.html" , mfr: "https://dardevle.com/product-category/devle_dog/" }),
@@ -133,6 +183,22 @@ export const LURES: LureEntry[] = [
   L("Berkley", "Gulp! Minnow on Jig", "softbait"),
   L("Pro-Troll", "Hoochie Squid", "softbait"),
   L("Generic", "Trolling Fly", "softbait"),
+  // Kalin's (an Acme brand). Soft plastics usually trolled on a jig head: lengths are Kalin's own; the weight is the jig's,
+  // so it's left blank (log readings, or add a custom lure with your jig weight for a better starting estimate).
+  L("Kalin's", "Lunker Grub 2 in", "softbait", { len: 2, mfr: "https://www.acmetackle.com/products/lunker-grubs" }),
+  L("Kalin's", "Lunker Grub 3 in", "softbait", { len: 3, mfr: "https://www.acmetackle.com/products/lunker-grubs" }),
+  L("Kalin's", "Lunker Grub 4 in", "softbait", { len: 4, mfr: "https://www.acmetackle.com/products/lunker-grubs" }),
+  L("Kalin's", "Lunker Grub 5 in", "softbait", { len: 5, mfr: "https://www.acmetackle.com/products/lunker-grubs" }),
+  L("Kalin's", "Triple Threat Grub 2 in", "softbait", { len: 2, mfr: "https://www.acmetackle.com/collections/kalins-grubs" }),
+  L("Kalin's", "Triple Threat Grub 3 in", "softbait", { len: 3, mfr: "https://www.acmetackle.com/collections/kalins-grubs" }),
+  L("Kalin's", "Triple Threat Crappie Scrub 1-3/4 in", "softbait", { len: 1.75, mfr: "https://www.acmetackle.com/products/triple-threat-crappie-scrub" }),
+  L("Kalin's", "Triple Threat Tickle Tail 2 in", "softbait", { len: 2, mfr: "https://www.acmetackle.com/products/2inch-triple-tickle-tail" }),
+  L("Kalin's", "Tickle Tail 2.8 in", "softbait", { len: 2.8, mfr: "https://www.acmetackle.com/products/tickle-tail" }),
+  L("Kalin's", "Tickle Tail 3.8 in", "softbait", { len: 3.8, mfr: "https://www.acmetackle.com/products/tickle-tail" }),
+  L("Kalin's", "Tickle Tail 4.8 in", "softbait", { len: 4.8, mfr: "https://www.acmetackle.com/products/tickle-tail" }),
+  L("Kalin's", "Sizmic Shad 3.8 in", "softbait", { len: 3.8, mfr: "https://www.acmetackle.com/products/sizmic-shad" }),
+  L("Kalin's", "Sizmic Shad 4.8 in", "softbait", { len: 4.8, mfr: "https://www.acmetackle.com/products/sizmic-shad" }),
+  L("Kalin's", "Mogambo Grub 6 in", "softbait", { len: 6, mfr: "https://www.acmetackle.com/products/6-mogambo-grub" }),
   // Walleye Nation Creations (weights only where a listing gave them; dive = 'when trolled' on light line, not leadcore)
   L("Walleye Nation Creations", "WNC Reaper", "crankbait", { w: 0.5, len: 4.5, dive: { max: 20 }, mfr: "https://www.walleyenation.com/products/wnc-reaper", src: "https://sportsmans.com/fishing-gear-supplies/hard-baits/crankbaits/walleye-nation-creations-reaper-crankbait/p/p237329" }),
   L("Walleye Nation Creations", "Lil Reaper", "crankbait", { w: 0.25, len: 3.5, dive: { max: 12 }, mfr: "https://www.walleyenation.com/products/lil-reaper", src: "https://www.sportsmans.com/fishing-gear-supplies/hard-baits/walleye-nations-creations-lil-reaper-crankbait/p/p319001" }),

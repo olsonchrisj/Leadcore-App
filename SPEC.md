@@ -64,7 +64,7 @@ ln(depth_ft) = ln(physical depth with learned multipliers) + discrepancy
 
 ### Validation (simulation, not field data)
 
-`npm test` runs 85 tests, including: exact limits (catenary with no drag, straight-down hang, level weightless line, terminal slope), step-size convergence, agreement with refined solves across random plausible conditions, monotonicity, finite-difference checks of every gradient, recovery of known parameters from simulated readings, honest 80% bands (about 80% of fresh readings land inside), uncertainty shrinking with data, outlier robustness, leave-one-out versus brute-force refits, and a fit of a season of readings staying fast.
+`npm test` runs 87 tests, including: exact limits (catenary with no drag, straight-down hang, level weightless line, terminal slope), step-size convergence, agreement with refined solves across random plausible conditions, monotonicity, finite-difference checks of every gradient, recovery of known parameters from simulated readings, honest 80% bands (about 80% of fresh readings land inside), uncertainty shrinking with data, outlier robustness, leave-one-out versus brute-force refits, and a fit of a season of readings staying fast.
 
 Simulation results (`src/engine/test-utils.ts` generates the readings):
 
@@ -96,7 +96,7 @@ Plan · Chart · Readings · Lures · Settings (bottom navigation). Dark and lig
 
 ## Lure catalogue (`src/data/lures.ts`)
 
-About 90 trolled lures (spoons, crankbaits, stickbaits, plugs, divers, spinners/harnesses, soft baits, Walleye Nation Creations) plus attractors. Weights and lengths appear only where retailer or manufacturer listings agreed, each with a source link (manufacturer preferred). Rated dive depths are for casting or mono trolling and do **not** apply on leadcore: they are used only as a proxy for bill size in the drag prior. Custom lures take weight, length and rated dive.
+About 130 trolled lures (spoons, crankbaits, stickbaits, plugs, divers, spinners/harnesses, soft baits; full Acme spoon range, Kalin's soft plastics, Walleye Nation Creations) plus attractors. Weights and lengths appear only where retailer or manufacturer listings agreed, each with a source link (manufacturer preferred). Rated dive depths are for casting or mono trolling and do **not** apply on leadcore: they are used only as a proxy for bill size in the drag prior. Custom lures take weight, length and rated dive.
 
 ## Not modelled
 

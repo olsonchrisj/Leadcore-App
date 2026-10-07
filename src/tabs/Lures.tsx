@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { predictDepth, type AttractorType, type LureType } from "../engine";
 import { ATTRACTOR_KINDS, LURE_KINDS, attractorKindLabel, lureKindLabel } from "../data/kinds";
-import type { AttractorEntry, LureEntry } from "../data/lures";
+import { compareLures, type AttractorEntry, type LureEntry } from "../data/lures";
 import { useApp } from "../state/AppState";
 import { lureRef } from "../state/readings";
 import { fmtLen } from "../state/units";
@@ -51,7 +51,7 @@ export function Lures({ goTo }: { goTo: (t: TabId) => void }) {
   const matches = (s: string) => !needle || needle.split(/\s+/).every((w) => s.toLowerCase().includes(w));
   const shownLures = lures
     .filter((l) => (kind === "all" || l.type === kind) && matches(`${l.brand} ${l.name} ${lureKindLabel(l.type)}`))
-    .sort((a, b) => byName(a.brand + " " + a.name, b.brand + " " + b.name));
+    .sort(compareLures);
   const shownAtts = atts.filter((a) => kind === "all" && matches(`${a.brand} ${a.name} ${attractorKindLabel(a.type)}`)).sort((a, b) => byName(a.brand + a.name, b.brand + b.name));
   const pick = (id: string) => {
     setRig({ lureId: id });

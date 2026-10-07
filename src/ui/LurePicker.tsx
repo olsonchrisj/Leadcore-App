@@ -1,10 +1,11 @@
 import { useId } from "react";
-import type { LureEntry } from "../data/lures";
+import { compareLures, lureFamily, type LureEntry } from "../data/lures";
 import { LURE_KINDS } from "../data/kinds";
 
 const byName = (a: string, b: string) => a.localeCompare(b, undefined, { sensitivity: "base", numeric: true });
 
-const modelLabel = (l: LureEntry) => (l.weightOz ? `${l.name} · ${Number(l.weightOz.toFixed(2))} oz` : l.name);
+// Show the weight unless the name already carries a size ("Little Cleo 1/4 oz").
+const modelLabel = (l: LureEntry) => (l.weightOz && lureFamily(l.name) === l.name ? `${l.name} · ${Number(l.weightOz.toFixed(2))} oz` : l.name);
 
 /** Type → brand → model, so one tap path narrows a long catalogue. */
 export function LurePicker(props: { lures: LureEntry[]; selected: LureEntry; onPick: (id: string) => void }) {
@@ -12,8 +13,8 @@ export function LurePicker(props: { lures: LureEntry[]; selected: LureEntry; onP
   const id = useId();
   const types = LURE_KINDS.filter((k) => lures.some((l) => l.type === k.id));
   const brands = [...new Set(lures.filter((l) => l.type === selected.type).map((l) => l.brand))].sort(byName);
-  const models = lures.filter((l) => l.type === selected.type && l.brand === selected.brand).sort((a, b) => byName(a.name, b.name));
-  const first = (f: (l: LureEntry) => boolean) => lures.filter(f).sort((a, b) => byName(a.brand + " " + a.name, b.brand + " " + b.name))[0];
+  const models = lures.filter((l) => l.type === selected.type && l.brand === selected.brand).sort(compareLures);
+  const first = (f: (l: LureEntry) => boolean) => lures.filter(f).sort(compareLures)[0];
   return (
     <>
       <div className="grid">

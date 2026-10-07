@@ -71,6 +71,9 @@ describe("physical behaviour", () => {
     expect(depth(baseCfg({ lure: spoonB }), 150)).toBeGreaterThan(depth(baseCfg({ lure: spoonA }), 150));
     expect(lureCda({ ...crank, ratedDiveFt: 30 })).toBeGreaterThan(lureCda({ ...crank, ratedDiveFt: 8 }));
     expect(lureCda({ id: "x", type: "crankbait" })).toBeGreaterThan(0);
+    // a soft plastic without a weight is sized by its length; a known weight still takes precedence
+    expect(lureCda({ id: "g5", type: "softbait", lengthIn: 5 })).toBeGreaterThan(lureCda({ id: "g2", type: "softbait", lengthIn: 2 }));
+    expect(lureCda({ id: "g", type: "softbait", lengthIn: 5, weightOz: 0.35 })).toBeCloseTo(lureCda({ id: "g", type: "softbait", weightOz: 0.35 }), 12);
   });
 
   it("a deeper-rated crankbait lifts its line more steeply, so it runs deeper on a short line", () => {

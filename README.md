@@ -23,7 +23,7 @@ Depth comes from a towed-cable physics model (leader, leadcore and backing, each
 ```
 npm install
 npm run dev        # dev server
-npm test           # 85 unit tests: physics, fitting, state, data
+npm test           # 87 unit tests: physics, fitting, state, data
 npm run build      # typecheck + production build in dist/
 ```
 

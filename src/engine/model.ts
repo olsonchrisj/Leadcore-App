@@ -73,6 +73,8 @@ export function lureCda(lure: LureRef): number {
     f = Math.pow(lure.lengthIn / 3, 1.5);
   } else if (lure.weightOz) {
     f = Math.pow(lure.weightOz / t.defaultOz, 2 / 3);
+  } else if (lure.type === "softbait" && lure.lengthIn) {
+    f = Math.pow(lure.lengthIn / 3, 1.5); // a soft plastic with no weight given (it's on a jig): size it by length
   }
   return t.cda * Math.min(3.5, Math.max(0.5, f));
 }

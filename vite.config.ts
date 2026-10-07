@@ -18,10 +18,13 @@ export default defineConfig({
           { src: "icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
           { src: "icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
           { src: "icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
-          { src: "icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any" },
         ],
       },
-      workbox: { globPatterns: ["**/*.{js,css,html,svg,png}"] },
+      workbox: {
+        globPatterns: ["**/*.{js,css,html,svg,png}"],
+        // install-time icons are fetched by the OS, not the app: keep them out of the offline cache
+        globIgnores: ["icon-512.png", "icon-maskable-512.png"],
+      },
     }),
   ],
   test: { include: ["src/**/*.test.ts"] },

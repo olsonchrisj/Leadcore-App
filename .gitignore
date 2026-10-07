@@ -1,2 +1,4 @@
 node_modules
 dist
+tools/icon/fish_cache.npz
+__pycache__

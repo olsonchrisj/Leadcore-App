@@ -63,3 +63,6 @@ Web search returned mostly scraped/SEO pages; the two substantive forum sources 
 ## UI (implemented)
 Vite + React PWA, data in localStorage. Calculator tab: rig (leadcore on reel, speed, leader material/length, lure, attractor), plan (target depth -> counter with 80% range), log reading (counter + LiveScope depth). Readings tab: list/delete, JSON import/export. Suffix 832 only. Lures tab: names/types only, search, custom lures/attractors. Water temp, notes, leader test and lure weight inputs removed (decluttered). Rod angle, holder, current, turns dropped by decision (lake fishing).
 Not yet: metric toggle, thermocline/target-depth helper, offline install testing on a phone.
+
+## App icon
+Procedurally rendered walleye close-up with a braided leadcore cord and leader entering the mouth (`tools/icon/`, regenerate with `python3 tools/icon/export_icons.py`). Outputs: `assets/app-store-icon-1024.png` (App Store master, opaque), `assets/alt-icon-fullbody-1024.png` (whole-fish alternative), PWA/touch/maskable PNGs and favicon in `public/`.

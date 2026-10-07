@@ -177,17 +177,32 @@ export interface NextReading {
   uncertaintyPct: number;
 }
 
-/** Where a new reading would teach the model the most: the most uncertain practical point. */
-export function suggestNextReading(model: FittedModel, cfg: RigConfig): NextReading {
-  let best: NextReading = { speedMph: cfg.speedMph, counterFt: Math.min(150, cfg.leadcoreLengthFt), uncertaintyPct: 0 };
-  const top = Math.max(cfg.leadcoreLengthFt, 60);
-  for (let s = 1.4; s <= 3.21; s += 0.2) {
-    for (let c = 60; c <= top + 1e-6; c += 30) {
-      const { sd } = predictLog(model, { ...cfg, speedMph: Math.round(s * 10) / 10 }, c);
-      if (sd * 100 > best.uncertaintyPct) best = { speedMph: Math.round(s * 10) / 10, counterFt: c, uncertaintyPct: (Math.exp(sd) - 1) * 100 };
+export interface SuggestBounds {
+  /** Speeds worth trying, mph. Default 1.4–3.2. */
+  speedMph?: [number, number];
+  /** Line out worth trying, ft. Default 60 ft up to the leadcore length. */
+  counterFt?: [number, number];
+}
+
+const linspace = (lo: number, hi: number, n: number) => (hi <= lo ? [lo] : Array.from({ length: n }, (_, i) => lo + ((hi - lo) * i) / (n - 1)));
+
+/**
+ * Where a new reading would teach the model the most: the practical speed and
+ * line-out combination it is least sure about, rounded to numbers you can set.
+ */
+export function suggestNextReading(model: FittedModel, cfg: RigConfig, bounds: SuggestBounds = {}): NextReading {
+  const [sLo, sHi] = bounds.speedMph ?? [1.4, 3.2];
+  const [cLo, cHi] = bounds.counterFt ?? [60, Math.max(cfg.leadcoreLengthFt, 60)];
+  let best = { sd: -1, speedMph: cfg.speedMph, counterFt: Math.min(150, cfg.leadcoreLengthFt) };
+  for (const s of linspace(sLo, sHi, 7)) {
+    const speedMph = Math.round(s * 10) / 10;
+    for (const c of linspace(cLo, cHi, 7)) {
+      const counterFt = Math.max(10, Math.round(c / 10) * 10);
+      const { sd } = predictLog(model, { ...cfg, speedMph }, counterFt);
+      if (sd > best.sd + 1e-9) best = { sd, speedMph, counterFt };
     }
   }
-  return best;
+  return { speedMph: best.speedMph, counterFt: best.counterFt, uncertaintyPct: (Math.exp(Math.max(best.sd, 0)) - 1) * 100 };
 }
 
 export interface LineRate {

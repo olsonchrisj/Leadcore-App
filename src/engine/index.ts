@@ -11,7 +11,8 @@ export {
   type ChartCell,
   type FitSummary,
   type NextReading,
+  type SuggestBounds,
   type LineRate,
   type SolveOptions,
 } from "./predict";
-export { LINES } from "./catalog";
+export { LINES, LURE_TYPES, ATTRACTOR_TYPES, LEADER_MATERIALS } from "./catalog";

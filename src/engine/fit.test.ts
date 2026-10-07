@@ -18,6 +18,26 @@ const truth = truthGetter(TRUTH);
 const trueDepth = (cfg: ReturnType<typeof baseCfg>, c: number) => Math.exp(logDepth(cfg, c, truth));
 
 describe("fitModel", () => {
+  it("a warm start from the previous fit lands on the same answer, in fewer iterations", () => {
+    const all = simulate(TRUTH, 30, 11, 0.04);
+    const cold = fitModel(all, { estimateNoise: true });
+    const previous = fitModel(all.slice(0, 29), { estimateNoise: true });
+    const warm = fitModel(all, { estimateNoise: true, init: previous });
+    expect(warm.paramNames).toEqual(cold.paramNames);
+    cold.mean.forEach((v, i) => expect(Math.abs(warm.mean[i]! - v)).toBeLessThan(0.01));
+    expect(Math.abs(warm.sigma - cold.sigma)).toBeLessThan(0.005);
+    expect(warm.iterations).toBeLessThanOrEqual(cold.iterations);
+  });
+
+  it("ignores a warm start that knows nothing about the new parameters", () => {
+    const a = simulate(TRUTH, 12, 21, 0.04, [spoonA]);
+    const b = simulate(TRUTH, 12, 22, 0.04, [crank]);
+    const prev = fitModel(a);
+    const warm = fitModel([...a, ...b], { init: prev });
+    const cold = fitModel([...a, ...b]);
+    cold.mean.forEach((v, i) => expect(Math.abs(warm.mean[i]! - v)).toBeLessThan(0.02));
+  });
+
   it("with no readings is just the catalogue", () => {
     const m = fitModel([]);
     expect(m.nObservations).toBe(0);

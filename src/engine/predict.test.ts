@@ -98,6 +98,23 @@ describe("guidance helpers", () => {
     expect(next.uncertaintyPct).toBeGreaterThan(0);
   });
 
+  it("keeps the suggestion inside the bounds it was given", () => {
+    const m = fitModel(simulate({}, 8, 5, 0.04));
+    const cfg = baseCfg({ lure: spoonA });
+    const next = suggestNextReading(m, cfg, { speedMph: [2.2, 2.6], counterFt: [100, 180] });
+    expect(next.speedMph).toBeGreaterThanOrEqual(2.2 - 1e-9);
+    expect(next.speedMph).toBeLessThanOrEqual(2.6 + 1e-9);
+    expect(next.counterFt).toBeGreaterThanOrEqual(100);
+    expect(next.counterFt).toBeLessThanOrEqual(180);
+    // and no other point on the same grid is more uncertain
+    const sdAt = (s: number, c: number) => {
+      const p = predictDepth(m, { ...cfg, speedMph: s }, c);
+      return p.sdLog;
+    };
+    const chosen = sdAt(next.speedMph, next.counterFt);
+    for (const s of [2.2, 2.3, 2.4, 2.5, 2.6]) for (const c of [100, 140, 180]) expect(sdAt(s, c)).toBeLessThanOrEqual(chosen * 1.1);
+  });
+
   it("reports the learned feet-per-colour against the starting assumption", () => {
     const r0 = referenceRate(prior, "suffix-832");
     expect(r0.ftPerColor).toBeCloseTo(r0.nominalFtPerColor, 6);

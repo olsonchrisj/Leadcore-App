@@ -3,7 +3,7 @@
  *
  * These are engineering estimates, not measurements: the line constants are
  * calibrated so a reference rig reproduces common rules of thumb (about 7 ft of
- * depth per 30 ft colour for Suffix 832, 4.5 for traditional leadcore at 2 mph),
+ * depth per 30 ft colour for Sufix 832, 4.5 for traditional leadcore at 2 mph),
  * and lure/attractor drag areas are typical orders of magnitude. All of them are
  * multiplied by learned factors as readings come in, so errors here cost
  * accuracy only until the logs outvote them.
@@ -30,7 +30,7 @@ export interface LineSpec {
 }
 
 export const LINES: Record<string, LineSpec> = {
-  "suffix-832": { id: "suffix-832", label: "Suffix 832 Advanced Lead Core", K: 0.1885, d: 0.0010, cdn: 1.2, cft: 0.025 },
+  "suffix-832": { id: "suffix-832", label: "Sufix 832 Advanced Lead Core", K: 0.1885, d: 0.0010, cdn: 1.2, cft: 0.025 },
   "generic-leadcore": { id: "generic-leadcore", label: "Traditional leadcore", K: 0.1129, d: 0.0016, cdn: 1.2, cft: 0.025 },
 };
 

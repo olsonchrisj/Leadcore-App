@@ -73,6 +73,37 @@ function NumInput(props: {
   );
 }
 
+function LurePicker(props: { lures: LureEntry[]; selected: LureEntry; onPick: (id: string) => void }) {
+  const { lures, selected } = props;
+  const byName = (a: string, b: string) => a.localeCompare(b);
+  const types = LURE_TYPES.filter((t) => lures.some((l) => l.type === t));
+  const brands = [...new Set(lures.filter((l) => l.type === selected.type).map((l) => l.brand))].sort(byName);
+  const models = lures.filter((l) => l.type === selected.type && l.brand === selected.brand).sort((a, b) => byName(a.name, b.name));
+  const first = (f: (l: LureEntry) => boolean) => [...lures].filter(f).sort((a, b) => byName(a.brand + a.name, b.brand + b.name))[0];
+  return (
+    <div className="grid">
+      <label className="field">
+        <span>Type</span>
+        <select value={selected.type} onChange={(e) => { const l = first((x) => x.type === e.target.value); if (l) props.onPick(l.id); }}>
+          {types.map((t) => <option key={t}>{t}</option>)}
+        </select>
+      </label>
+      <label className="field">
+        <span>Brand</span>
+        <select value={selected.brand} onChange={(e) => { const l = first((x) => x.type === selected.type && x.brand === e.target.value); if (l) props.onPick(l.id); }}>
+          {brands.map((b) => <option key={b}>{b}</option>)}
+        </select>
+      </label>
+      <label className="field">
+        <span>Model</span>
+        <select value={selected.id} onChange={(e) => props.onPick(e.target.value)}>
+          {models.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+        </select>
+      </label>
+    </div>
+  );
+}
+
 function download(name: string, text: string, type: string) {
   const url = URL.createObjectURL(new Blob([text], { type }));
   const a = document.createElement("a");
@@ -200,14 +231,7 @@ export function App() {
               </label>
               <NumInput label="Leader length" suffix="ft" value={rig.leaderFt} onChange={(v) => set("leaderFt", v ?? 0)} />
             </div>
-            <label className="field">
-              <span>Lure</span>
-              <select value={lure.id} onChange={(e) => set("lureId", e.target.value)}>
-                {[...lures].sort((a, b) => `${a.type}${a.brand}${a.name}`.localeCompare(`${b.type}${b.brand}${b.name}`)).map((l) => (
-                  <option key={l.id} value={l.id}>{l.type} · {l.brand} {l.name}</option>
-                ))}
-              </select>
-            </label>
+            <LurePicker lures={lures} selected={lure} onPick={(id) => set("lureId", id)} />
             <div className="grid">
               <label className="field">
                 <span>Attractor</span>

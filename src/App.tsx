@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   fitModel,
   predictDepth,
@@ -82,8 +82,34 @@ function download(name: string, text: string, type: string) {
   URL.revokeObjectURL(url);
 }
 
+async function shareOrDownload(name: string, text: string) {
+  const file = new File([text], name, { type: "application/json" });
+  try {
+    if (navigator.canShare?.({ files: [file] })) {
+      await navigator.share({ files: [file], title: "Leadcore data" });
+      return;
+    }
+  } catch (e) {
+    if ((e as Error).name === "AbortError") return; // user closed the share sheet
+  }
+  download(name, text, "application/json");
+}
+
 export function App() {
   const [tab, setTab] = useState<"calc" | "readings" | "lures">("calc");
+  const [persisted, setPersisted] = useState<boolean | null>(null);
+  useEffect(() => {
+    // Ask the browser not to evict our data when storage is tight.
+    (async () => {
+      try {
+        const sm = navigator.storage;
+        if (!sm?.persist) return;
+        setPersisted((await sm.persisted()) || (await sm.persist()));
+      } catch {
+        setPersisted(null);
+      }
+    })();
+  }, []);
   const [rig, setRig] = useStored<RigForm>("lc.rig", DEFAULT_RIG);
   const [readings, setReadings] = useStored<Reading[]>("lc.readings", []);
   const [customLures, setCustomLures] = useStored<LureEntry[]>("lc.lures", []);
@@ -127,10 +153,9 @@ export function App() {
   };
 
   const exportAll = () =>
-    download(
+    shareOrDownload(
       `leadcore-data-${new Date().toISOString().slice(0, 10)}.json`,
       JSON.stringify({ version: 1, readings, customLures, customAtts }, null, 2),
-      "application/json",
     );
 
   const importAll = async (file: File) => {
@@ -233,9 +258,14 @@ export function App() {
       {tab === "readings" && (
         <section>
           <h2>Readings</h2>
+          <p className="hint">
+            Readings are stored on this device only. Back up to Files, Drive or email after each trip.
+            {persisted === true && " Browser storage is protected from automatic cleanup."}
+            {persisted === false && " Browser may clear this data if the phone runs low on space: back up often."}
+          </p>
           <div className="row">
-            <button onClick={exportAll}>Export JSON</button>
-            <label className="button">Import JSON<input type="file" accept="application/json" hidden onChange={(e) => e.target.files?.[0] && importAll(e.target.files[0])} /></label>
+            <button className="primary" onClick={exportAll}>Back up / share</button>
+            <label className="button">Restore from file<input type="file" accept="application/json" hidden onChange={(e) => e.target.files?.[0] && importAll(e.target.files[0])} /></label>
           </div>
           <table>
             <thead><tr><th>Lure</th><th>mph</th><th>Counter</th><th>Depth</th><th /></tr></thead>

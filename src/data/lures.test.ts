@@ -11,7 +11,7 @@ describe("lure data", () => {
       if (l.weightOz !== undefined) expect(l.weightOz).toBeGreaterThan(0.05);
       if (l.weightOz !== undefined) expect(l.weightOz).toBeLessThan(2);
       if (l.ratedDive) expect(l.ratedDive.max).toBeGreaterThan(l.ratedDive.min ?? 0);
-      if (l.weightOz || l.ratedDive) expect(l.source).toMatch(/^https:\/\//);
+      if (l.weightOz || l.ratedDive) expect(l.mfrUrl ?? l.source).toMatch(/^https:\/\//);
     }
   });
 });

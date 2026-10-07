@@ -133,6 +133,27 @@ export const LURES: LureEntry[] = [
   L("Berkley", "Gulp! Minnow on Jig", "softbait"),
   L("Pro-Troll", "Hoochie Squid", "softbait"),
   L("Generic", "Trolling Fly", "softbait"),
+  // Walleye Nation Creations (weights only where a listing gave them; dive = 'when trolled' on light line, not leadcore)
+  L("Walleye Nation Creations", "WNC Reaper", "crankbait", { w: 0.5, len: 4.5, dive: { max: 20 }, mfr: "https://www.walleyenation.com/products/wnc-reaper", src: "https://sportsmans.com/fishing-gear-supplies/hard-baits/crankbaits/walleye-nation-creations-reaper-crankbait/p/p237329" }),
+  L("Walleye Nation Creations", "Lil Reaper", "crankbait", { w: 0.25, len: 3.5, dive: { max: 12 }, mfr: "https://www.walleyenation.com/products/lil-reaper", src: "https://www.sportsmans.com/fishing-gear-supplies/hard-baits/walleye-nations-creations-lil-reaper-crankbait/p/p319001" }),
+  L("Walleye Nation Creations", "SB Reaper", "crankbait", { w: 0.4375, len: 4.5, dive: { max: 14 }, mfr: "https://www.walleyenation.com/products/sb-reaper", src: "https://www.cabelas.com/shop/en/walleye-nation-suspending-sb-reaper" }),
+  L("Walleye Nation Creations", "Lil SB Reaper", "crankbait", { len: 3.5, dive: { max: 8 }, mfr: "https://www.walleyenation.com/products/lil-sb-reaper" }),
+  L("Walleye Nation Creations", "Shaky Shad 5", "crankbait", { len: 2, dive: { max: 7 }, mfr: "https://www.walleyenation.com/products/shaky-shad-5" }),
+  L("Walleye Nation Creations", "Shaky Shad 7", "crankbait", { len: 2.75, dive: { max: 13 }, mfr: "https://www.walleyenation.com/products/shaky-shad" }),
+  L("Walleye Nation Creations", "Boogie Shad 5", "crankbait", { len: 2.1, mfr: "https://www.walleyenation.com/products/boogie-shad" }),
+  L("Walleye Nation Creations", "Boogie Shad 6", "crankbait", { len: 2.5, mfr: "https://www.walleyenation.com/products/boogie-shad" }),
+  L("Walleye Nation Creations", "Double Trouble Harness", "spinner", { mfr: "https://www.walleyenation.com/products/double-trouble-harness-3-79" }),
+  L("Walleye Nation Creations", "Rip-N-Glide 2 in", "softbait", { w: 0.1875, len: 2, mfr: "https://www.walleyenation.com/products/rip-n-glide" }),
+  L("Walleye Nation Creations", "Rip-N-Glide 2.5 in", "softbait", { w: 0.3125, len: 2.5, mfr: "https://www.walleyenation.com/products/rip-n-glide" }),
+  L("Walleye Nation Creations", "Rip-N-Glide 3 in", "softbait", { w: 0.625, len: 3, mfr: "https://www.walleyenation.com/products/rip-n-glide" }),
+  L("Walleye Nation Creations", "Rip-N-Glide 3.5 in", "softbait", { w: 0.875, len: 3.5, mfr: "https://www.walleyenation.com/products/rip-n-glide" }),
+  L("Walleye Nation Creations", "Death Jig 1/4 oz", "softbait", { w: 0.25, mfr: "https://www.walleyenation.com/products/death-jigs" }),
+  L("Walleye Nation Creations", "Death Jig 3/8 oz", "softbait", { w: 0.375, mfr: "https://www.walleyenation.com/products/death-jigs" }),
+  L("Walleye Nation Creations", "Death Jig 3/4 oz", "softbait", { w: 0.75, mfr: "https://www.walleyenation.com/products/death-jigs" }),
+  L("Walleye Nation Creations", "Death Jig 1-1/2 oz", "softbait", { w: 1.5, mfr: "https://www.walleyenation.com/products/death-jigs" }),
+  L("Walleye Nation Creations", "Marble Eye Jig 1/4 oz", "softbait", { w: 0.25, mfr: "https://www.walleyenation.com/products/marble-eye-jigs" }),
+  L("Walleye Nation Creations", "Marble Eye Jig 3/8 oz", "softbait", { w: 0.375, mfr: "https://www.walleyenation.com/products/marble-eye-jigs" }),
+  L("Walleye Nation Creations", "Marble Eye Jig 1/2 oz", "softbait", { w: 0.5, mfr: "https://www.walleyenation.com/products/marble-eye-jigs" }),
 ];
 
 const A = (brand: string, name: string, type: AttractorType): AttractorEntry => ({

@@ -57,7 +57,8 @@ export function fitModel(observations: Observation[], opts: FitOptions = {}): Fi
   const skipped: FittedModel["skipped"] = [];
   const rows = sanitize(observations, skipped);
   const k = opts.huber ?? 2;
-  let sigma = opts.sigma ?? SIGMA0;
+  // When re-estimating the noise from a previous fit, start from what that fit found.
+  let sigma = opts.sigma ?? (opts.estimateNoise && opts.init ? opts.init.sigma : undefined) ?? SIGMA0;
   const n = rows.length;
 
   // ---- parameter registry
@@ -174,7 +175,7 @@ export function fitModel(observations: Observation[], opts: FitOptions = {}): Fi
           phi = phiNew;
           lambda = Math.max(lambda / 3, 1e-9);
           accepted = true;
-          if (move < 1e-6 || gain < 1e-10 * (1 + Math.abs(phi))) {
+          if (move < 1e-5 || gain < 1e-9 * (1 + Math.abs(phi))) {
             converged = true;
             return;
           }
@@ -220,7 +221,9 @@ export function fitModel(observations: Observation[], opts: FitOptions = {}): Fi
         const next = Math.min(SIGMA_MAX, Math.max(SIGMA_MIN, Math.sqrt((NU0 * SIGMA0 * SIGMA0 + rss) / (NU0 + dof))));
         const change = Math.abs(next - sigma) / sigma;
         sigma = next;
-        optimise(sigma);
+        // A few percent more or less noise moves the optimum far less than its own uncertainty: only
+        // refit when the noise estimate really changed, otherwise just refresh the posterior.
+        if (change >= 0.03) optimise(sigma);
         post = posterior(sigma);
         if (change < 0.03) break;
       }

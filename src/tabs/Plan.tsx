@@ -122,11 +122,11 @@ export function Plan({ goTo }: { goTo: (t: TabId) => void }) {
             onChange={setCounterEntered}
             min={1}
             max={3000}
-            hint={counterEntered === null && plannedCounter !== null ? "From the plan. Change it if you set something else." : undefined}
           />
           <NumInput label="Depth (LiveScope)" unit={units.length} decimals={1} optional value={depth} onChange={setDepth} min={0.5} max={600} />
         </div>
         <p className="hint">
+          {counterEntered === null && plannedCounter !== null ? "The counter is filled in from the plan: change it if you set something else. " : ""}
           Logging at {fmtSpeed(units, rig.speedMph)} {units.speed.label} with {lure.brand} {lure.name}
           {att ? ` + ${att.name}` : ""}. Read the depth once the line has settled, about a minute at a steady speed.
         </p>

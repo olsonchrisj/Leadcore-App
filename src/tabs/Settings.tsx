@@ -8,6 +8,8 @@ import { NumInput } from "../ui/NumInput";
 export function Settings() {
   const { settings, setSettings, rig, setRig, units, readings, lures, atts, exportData, importFile, eraseAll, persisted } = useApp();
   const [confirmErase, setConfirmErase] = useState(false);
+  const installed =
+    (typeof window !== "undefined" && window.matchMedia?.("(display-mode: standalone)").matches) || (navigator as Navigator & { standalone?: boolean }).standalone === true;
   const customs = lures.filter((l) => l.custom).length + atts.filter((a) => a.custom).length;
 
   return (
@@ -93,6 +95,11 @@ export function Settings() {
           {persisted === true && " This browser has promised not to clear your data automatically."}
           {persisted === false && " The browser may clear this data if the phone runs low on space, so back up often."}
         </p>
+        {!installed && (
+          <p className="hint">
+            Tip: add this app to your Home Screen (in Safari: Share, then Add to Home Screen). It then works offline, and Safari won't clear its data after a week of not using it.
+          </p>
+        )}
         <div className="row">
           {!confirmErase ? (
             <button className="danger" onClick={() => setConfirmErase(true)}>
@@ -120,9 +127,9 @@ export function Settings() {
         <details>
           <summary>How the numbers are worked out</summary>
           <p>
-            The app treats your leadcore, leader and lure as a flexible line towed through water. It balances the weight of each piece against the drag of the water at your speed
-            and works out the shape the line settles into, so depth falls out of the physics rather than a lookup table. That's why speed, leader length and lure drag all
-            matter, and why the first 30 ft of line behaves differently from the last.
+            The app treats your leader, leadcore and backing as one flexible line towed through the water. It balances the weight of each piece against the drag of the water at your
+            speed, works out the shape the line settles into from the lure back to the boat, and reads off the depth. That is why speed, leader length and lure drag all matter, and why
+            the line isn't at one steady angle along its length.
           </p>
           <p>
             The starting values for the line, leader and each lure type are engineering estimates, not measurements. Every reading you log teaches the model how your actual gear

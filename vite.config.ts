@@ -15,6 +15,10 @@ export default defineConfig({
       manifest: {
         name: "Leadcore Trolling Calculator",
         short_name: "Leadcore",
+        description: "Leadcore trolling calculator: what to set the reel counter to for a target depth, learned from your own LiveScope readings.",
+        lang: "en",
+        orientation: "portrait",
+        categories: ["sports", "utilities"],
         display: "standalone",
         background_color: "#082c40",
         theme_color: "#082c40",

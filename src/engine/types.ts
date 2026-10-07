@@ -81,8 +81,11 @@ export interface FitOptions {
   /** Huber threshold in sigmas; readings beyond it are down-weighted. Default 2. */
   huber?: number;
   /** A previous fit to start from: far fewer iterations when one reading is added. */
-  init?: FittedModel;
+  init?: FitStart;
 }
+
+/** The part of a fit that is useful as a starting point (what the app caches between sessions). */
+export type FitStart = Pick<FittedModel, "paramNames" | "mean" | "sigma">;
 
 export interface RowDiagnostic {
   /** Index into the observations array that was passed to fitModel. */

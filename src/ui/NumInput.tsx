@@ -76,12 +76,12 @@ export function NumInput(props: Props) {
   const btn = (sign: 1 | -1, amount: number, big: boolean) => (
     <button
       type="button"
-      className="step"
+      className={big ? "step big" : "step"}
       aria-label={`${sign > 0 ? "Increase" : "Decrease"} ${props.label.toLowerCase()} by ${show(amount, 2)}`}
       onClick={() => nudge(sign * amount)}
     >
       {sign > 0 ? "+" : "−"}
-      {big && <small>{show(amount, 2)}</small>}
+      {big ? show(amount, 2) : ""}
     </button>
   );
 

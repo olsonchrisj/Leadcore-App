@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { fitModel, predictDepth, type FittedModel, type LureType, type RigConfig, type RowDiagnostic } from "../engine";
+import { ENGINE_VERSION, fitModel, predictDepth, type FitStart, type FittedModel, type LureType, type RigConfig, type RowDiagnostic } from "../engine";
 import { ATTRACTORS, LURES, slug, type AttractorEntry, type LureEntry } from "../data/lures";
 import { useToast } from "../ui/Toast";
 import { buildBackup, describeImport, mergeById, parseBackup } from "./backup";
@@ -85,6 +85,31 @@ export function useApp(): AppState {
 
 const EMPTY_FIT = (): FittedModel => fitModel([]);
 
+// The last fit's parameters are cached so the first fit after opening the app starts at the answer.
+const FIT_CACHE_KEY = "lc.fit";
+
+function loadFitCache(): FitStart | undefined {
+  try {
+    const raw = JSON.parse(localStorage.getItem(FIT_CACHE_KEY) ?? "null");
+    if (!raw || raw.v !== ENGINE_VERSION || !Array.isArray(raw.paramNames) || !Array.isArray(raw.mean)) return undefined;
+    if (raw.paramNames.length !== raw.mean.length || raw.paramNames.length > 5000) return undefined;
+    if (!raw.paramNames.every((n: unknown) => typeof n === "string") || !raw.mean.every((x: unknown) => typeof x === "number" && Number.isFinite(x))) return undefined;
+    if (typeof raw.sigma !== "number" || !(raw.sigma > 0.005 && raw.sigma < 1)) return undefined;
+    return { paramNames: raw.paramNames, mean: raw.mean, sigma: raw.sigma };
+  } catch {
+    return undefined;
+  }
+}
+
+function saveFitCache(m: FittedModel) {
+  if (m.paramNames.length === 0) return;
+  try {
+    localStorage.setItem(FIT_CACHE_KEY, JSON.stringify({ v: ENGINE_VERSION, paramNames: m.paramNames, mean: m.mean, sigma: m.sigma }));
+  } catch {
+    /* it's only a cache */
+  }
+}
+
 export function AppStateProvider({ children }: { children: ReactNode }) {
   const toast = useToast();
   const storageFailed = useStorageFailed();
@@ -117,7 +142,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   );
 
   // ---- the model: refit whenever the log changes, starting from the last answer
-  const prevFit = useRef<FittedModel | undefined>(undefined);
+  const prevFit = useRef<FitStart | undefined>(undefined);
+  if (prevFit.current === undefined) prevFit.current = loadFitCache();
   const fit = useMemo(() => {
     const { observations, ids } = fitInputs(readings, lureById);
     try {
@@ -130,6 +156,9 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     }
   }, [readings, lureById]);
   const diag = useMemo(() => diagnosticsById(fit.model.rows, fit.ids), [fit]);
+  useEffect(() => {
+    if (!fit.failed) saveFitCache(fit.model);
+  }, [fit]);
 
   // ---- ask the browser to keep our data when storage is tight
   const [persisted, setPersisted] = useState<boolean | null>(null);
@@ -314,7 +343,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setRigState({ ...DEFAULT_RIG, lureId: FIRST_LURE });
     setSettingsState({ ...DEFAULT_SETTINGS });
     for (const k of allAppKeys()) {
-      if (k.includes(".rescued.")) {
+      if (k.includes(".rescued.") || k === FIT_CACHE_KEY) {
         try {
           localStorage.removeItem(k);
         } catch {

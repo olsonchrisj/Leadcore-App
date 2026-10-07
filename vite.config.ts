@@ -2,8 +2,12 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 
+const sha = (process.env.GITHUB_SHA ?? "").slice(0, 7);
+const buildId = `${new Date().toISOString().slice(0, 10)}${sha ? ` (${sha})` : " (local)"}`;
+
 export default defineConfig({
   base: "./",
+  define: { __BUILD_ID__: JSON.stringify(buildId) },
   plugins: [
     react(),
     VitePWA({

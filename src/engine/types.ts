@@ -1,4 +1,4 @@
-/** Internal units: feet, miles per hour, ounces, pounds-test. */
+/** Public units: feet, miles per hour, ounces, pounds-test. (The solver works in SI internally.) */
 
 export type LeaderMaterial =
   | "fluorocarbon"
@@ -11,6 +11,8 @@ export interface Leader {
   material: LeaderMaterial;
   lengthFt: number;
   testLb?: number;
+  /** Overrides the diameter implied by material and test, mm. */
+  diameterMm?: number;
 }
 
 export type LureType =
@@ -29,6 +31,10 @@ export interface LureRef {
   id: string;
   type: LureType;
   weightOz?: number;
+  /** Body length, inches, when known (scales the drag prior for hard baits). */
+  lengthIn?: number;
+  /** Maker's rated maximum dive depth, ft (a proxy for bill size and drag). */
+  ratedDiveFt?: number;
 }
 
 export interface AttractorRef {
@@ -70,20 +76,51 @@ export interface PriorSpec {
 export interface FitOptions {
   /** Observation noise sd on ln(depth). Default 0.07 (~7%). */
   sigma?: number;
-  /** Re-estimate sigma from residuals (empirical Bayes). Default false. */
+  /** Re-estimate sigma from the residuals (needs a handful of readings). */
   estimateNoise?: boolean;
+  /** Huber threshold in sigmas; readings beyond it are down-weighted. Default 2. */
+  huber?: number;
+  /** A previous fit to start from: far fewer iterations when one reading is added. */
+  init?: FittedModel;
+}
+
+export interface RowDiagnostic {
+  /** Index into the observations array that was passed to fitModel. */
+  index: number;
+  counterFt: number;
+  depthFt: number;
+  predictedFt: number;
+  /** (observed - predicted) / predicted, percent. */
+  errPct: number;
+  /** Residual in noise sds. */
+  z: number;
+  /** Leave-one-out error, percent: how wrong a model fit without this reading would have been. */
+  looErrPct: number;
+  /** Robust weight actually used in the fit (1 = full). */
+  weight: number;
+  /** Looks like a mistyped or unusual reading. */
+  flagged: boolean;
+}
+
+export interface DataRange {
+  speedMph: [number, number];
+  counterFt: [number, number];
 }
 
 export interface FittedModel {
   paramNames: string[];
+  /** Posterior mean of every learned parameter. */
   mean: number[];
-  /** Posterior covariance, row-major p x p. */
+  /** Posterior covariance (Laplace approximation), row-major. */
   cov: number[][];
+  /** Noise sd on ln(depth). */
   sigma: number;
   nObservations: number;
   skipped: { index: number; reason: string }[];
-  /** Params held at a physical bound during the fit. */
-  pinned: string[];
+  rows: RowDiagnostic[];
+  dataRange: DataRange | null;
+  converged: boolean;
+  iterations: number;
 }
 
 export interface DepthPrediction {
@@ -99,6 +136,8 @@ export interface DepthPrediction {
 
 export interface CounterSolution {
   achievable: boolean;
+  /** The target is shallower than this rig runs even with almost no line out. */
+  tooShallow: boolean;
   counterFt: number;
   /** Counter for the shallow/deep ends of the 80% band. */
   counterForHighFt: number;

@@ -3,7 +3,7 @@
  *
  * These are engineering estimates, not measurements: the line constants are
  * calibrated so a reference rig reproduces common rules of thumb (about 7 ft of
- * depth per 30 ft colour for Sufix 832, 4.5 for traditional leadcore at 2 mph),
+ * depth per 30 ft colour for Sufix 832, about 5 for traditional leadcore at 2 mph),
  * and lure/attractor drag areas are typical orders of magnitude. All of them are
  * multiplied by learned factors as readings come in, so errors here cost
  * accuracy only until the logs outvote them.
@@ -31,7 +31,7 @@ export interface LineSpec {
 
 export const LINES: Record<string, LineSpec> = {
   "suffix-832": { id: "suffix-832", label: "Sufix 832 Advanced Lead Core", K: 0.1885, d: 0.0010, cdn: 1.2, cft: 0.025 },
-  "generic-leadcore": { id: "generic-leadcore", label: "Traditional leadcore", K: 0.1129, d: 0.0016, cdn: 1.2, cft: 0.025 },
+  "generic-leadcore": { id: "generic-leadcore", label: "Traditional leadcore", K: 0.1315, d: 0.0016, cdn: 1.2, cft: 0.025 },
 };
 
 export function lineSpec(id: string): LineSpec {
@@ -69,19 +69,32 @@ export interface LureTypeSpec {
   netWeightFrac: number;
   /** Extra static weight in water from hooks, N. */
   hookN: number;
-  /** Downward bill/dive force as a fraction of the lure's drag. */
+  /**
+   * Downward bill/dive force as a fraction of the lure's drag: the angle the line
+   * leaves the lure at, tanθ = dive when the lure's weight is negligible. A rated
+   * dive depth, when known, overrides this (see DIVE_FROM_RATED).
+   */
   dive: number;
 }
 
 export const LURE_TYPES: Record<LureType, LureTypeSpec> = {
   spoon: { cda: 9.0e-4, defaultOz: 0.35, netWeightFrac: 0.86, hookN: 0.005, dive: 0 },
-  crankbait: { cda: 3.0e-3, defaultOz: 0.3, netWeightFrac: 0.0, hookN: 0.015, dive: 0.3 },
-  stickbait: { cda: 1.6e-3, defaultOz: 0.3, netWeightFrac: 0.0, hookN: 0.012, dive: 0.18 },
-  plug: { cda: 5.0e-3, defaultOz: 0.55, netWeightFrac: 0.04, hookN: 0.02, dive: 0.22 },
+  crankbait: { cda: 3.0e-3, defaultOz: 0.3, netWeightFrac: 0.0, hookN: 0.015, dive: 0.18 },
+  stickbait: { cda: 1.6e-3, defaultOz: 0.3, netWeightFrac: 0.0, hookN: 0.012, dive: 0.12 },
+  plug: { cda: 5.0e-3, defaultOz: 0.55, netWeightFrac: 0.04, hookN: 0.02, dive: 0.2 },
   spinner: { cda: 1.0e-3, defaultOz: 0.3, netWeightFrac: 0.55, hookN: 0.006, dive: 0.05 },
   softbait: { cda: 5.0e-4, defaultOz: 0.35, netWeightFrac: 0.88, hookN: 0.004, dive: 0 },
   diver: { cda: 8.0e-3, defaultOz: 2.0, netWeightFrac: 0.85, hookN: 0.01, dive: 0.35 },
 };
+
+/**
+ * Bill lift for hard baits with a known rated dive depth: a small lip lifts little,
+ * a deep-diver's lip a lot. Anchored on one published point (a #5 Shad Rap runs
+ * about 8 ft deeper than its leader's end on 50 ft of 10 lb mono, a line angle of
+ * about 9°, so tanθ ≈ 0.17 at a rated 8 ft). Like everything here it is a starting
+ * value that readings correct.
+ */
+export const DIVE_FROM_RATED = { a: 0.05, b: 0.015, min: 0.08, max: 0.4 };
 
 export interface AttractorTypeSpec {
   cda: number;

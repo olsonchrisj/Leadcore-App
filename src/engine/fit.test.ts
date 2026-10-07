@@ -10,6 +10,7 @@ const TRUTH: Record<string, number> = {
   [P.lnK("suffix-832")]: 0.19,
   [P.typeDrag("spoon")]: 0.25,
   [P.lureDrag("crank-1")]: -0.2,
+  [P.typeDive("crankbait")]: -0.35, // hard baits lift less steeply than the catalogue assumes
   [P.lnDown]: -0.2,
   [P.lnLeader]: 0.15,
   [P.c1]: -0.08,

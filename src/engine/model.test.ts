@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { P, NO_MULTS, discTerms, logDepth, logDepthGrad, lureCda, paramNamesFor, physDepthFt } from "./model";
+import { P, NO_MULTS, discTerms, logDepth, logDepthGrad, lureCda, lureDiveFraction, paramNamesFor, physDepthFt } from "./model";
 import { baseCfg, crank, makeRng, spoonA, spoonB, truthGetter } from "./test-utils";
 import type { RigConfig } from "./types";
 
@@ -9,7 +9,22 @@ describe("catalogue calibration", () => {
   it("reference rig reproduces the rule-of-thumb feet per colour at 2 mph", () => {
     const ref = { id: "ref", type: "spoon" as const, weightOz: 0.35 };
     expect(depth(baseCfg({ lure: ref }), 300) / 10).toBeCloseTo(7.0, 1); //                       Suffix 832
-    expect(depth(baseCfg({ lure: ref, lineId: "generic-leadcore" }), 300) / 10).toBeCloseTo(4.6, 1); // traditional
+    expect(depth(baseCfg({ lure: ref, lineId: "generic-leadcore" }), 300) / 10).toBeCloseTo(5.2, 1); // traditional
+  });
+
+  it("matches the published rule-of-thumb examples it was anchored on", () => {
+    const shadRap5 = { id: "sr5", type: "crankbait" as const, ratedDiveFt: 8, weightOz: 0.2, lengthIn: 2 };
+    const trad = (counter: number) =>
+      depth(baseCfg({ lineId: "generic-leadcore", lure: shadRap5, leader: { material: "monofilament", lengthFt: 50, testLb: 10 } }), counter);
+    // "a #5 Shad Rap reaches an additional 8 ft on 50 ft of 10 lb mono"
+    expect(trad(0.5)).toBeGreaterThan(6);
+    expect(trad(0.5)).toBeLessThan(11);
+    // "3 colours of leadcore get you 15 ft, the lure another 8": about 23 ft, loosely additive
+    expect(trad(90)).toBeGreaterThan(18);
+    expect(trad(90)).toBeLessThan(27);
+    // a long traditional-leadcore set lands in the 5–6 ft per colour range quoted for 2 mph
+    expect(trad(300) / 10).toBeGreaterThan(4.5);
+    expect(trad(300) / 10).toBeLessThan(6.5);
   });
 });
 
@@ -56,6 +71,16 @@ describe("physical behaviour", () => {
     expect(depth(baseCfg({ lure: spoonB }), 150)).toBeGreaterThan(depth(baseCfg({ lure: spoonA }), 150));
     expect(lureCda({ ...crank, ratedDiveFt: 30 })).toBeGreaterThan(lureCda({ ...crank, ratedDiveFt: 8 }));
     expect(lureCda({ id: "x", type: "crankbait" })).toBeGreaterThan(0);
+  });
+
+  it("a deeper-rated crankbait lifts its line more steeply, so it runs deeper on a short line", () => {
+    const shallow = { id: "c4", type: "crankbait" as const, ratedDiveFt: 4 };
+    const deep = { id: "c20", type: "crankbait" as const, ratedDiveFt: 20 };
+    expect(lureDiveFraction(deep)).toBeGreaterThan(lureDiveFraction(shallow));
+    expect(lureDiveFraction({ id: "x", type: "spoon" })).toBe(0);
+    expect(lureDiveFraction({ id: "x", type: "crankbait", ratedDiveFt: 500 })).toBeLessThanOrEqual(0.4);
+    const run = (lure: typeof deep) => depth(baseCfg({ lure, leader: { material: "monofilament", lengthFt: 50 } }), 0.5);
+    expect(run(deep)).toBeGreaterThan(run(shallow));
   });
 
   it("copes with edge cases", () => {
@@ -109,6 +134,22 @@ describe("parameters and gradients", () => {
     expect(logDepth(cfg, 150, (n) => (n === P.c1 ? -0.2 : 0))).toBeCloseTo(a - 0.2 * Math.log(3 / 2), 10);
     expect(logDepth(cfg, 150, (n) => (n === P.c2 ? 0.1 : 0))).toBeCloseTo(a + 0.1 * Math.log(1), 10); // 150 ft is the reference
     expect(discTerms(baseCfg({ rigId: "r" }), 100).some(([n]) => n === P.rig("r"))).toBe(true);
+  });
+
+  it("only lures with a lip have bill-lift parameters, and a stronger lift runs deeper", () => {
+    expect(paramNamesFor(baseCfg()).some((n) => n.endsWith("lnDive"))).toBe(false);
+    const names = paramNamesFor(baseCfg({ lure: crank }));
+    expect(names).toContain(P.typeDive("crankbait"));
+    expect(names).toContain(P.lureDive("crank-1"));
+    const cfg = baseCfg({ lure: crank, leader: { material: "monofilament", lengthFt: 100 } });
+    const base = logDepth(cfg, 100, () => 0);
+    expect(logDepth(cfg, 100, (n) => (n === P.typeDive("crankbait") ? 0.4 : 0))).toBeGreaterThan(base);
+    expect(logDepth(cfg, 100, (n) => (n === P.lureDive("crank-1") ? -0.4 : 0))).toBeLessThan(base);
+    // the type-level and lure-level multipliers enter only through their sum
+    expect(logDepth(cfg, 100, (n) => (n === P.typeDive("crankbait") ? 0.2 : n === P.lureDive("crank-1") ? 0.1 : 0))).toBeCloseTo(
+      logDepth(cfg, 100, (n) => (n === P.typeDive("crankbait") ? 0.3 : 0)),
+      10,
+    );
   });
 
   it("lure drag multiplier lowers depth, lure downforce multiplier raises it", () => {

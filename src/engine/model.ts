@@ -15,6 +15,7 @@ import {
   ATTRACTOR_TYPES,
   BACKING,
   DEFAULT_LEADER_TEST_LB,
+  DIVE_FROM_RATED,
   FT,
   HARDWARE,
   LEADER_CDN,
@@ -36,7 +37,10 @@ export const P = {
   lureDrag: (id: string) => `phys:lure:${id}:lnDrag`,
   attTypeDrag: (t: string) => `phys:attType:${t}:lnDrag`,
   attDrag: (id: string) => `phys:att:${id}:lnDrag`,
-  /** Global: scale on the lure's net downward force (weight in water + dive force). */
+  /** Bill lift of diving lures (how steeply the line leaves the lure), by type and per lure. */
+  typeDive: (t: string) => `phys:lureType:${t}:lnDive`,
+  lureDive: (id: string) => `phys:lure:${id}:lnDive`,
+  /** Global: scale on the lure's weight in water (hooks, attractor and hardware weight included). */
   lnDown: "phys:global:lnDown",
   /** Global: scale on the leader's drag. */
   lnLeader: "phys:global:lnLeader",
@@ -52,11 +56,12 @@ export interface PhysMults {
   lnK: number;
   lnLure: number;
   lnAtt: number;
+  lnDive: number;
   lnDown: number;
   lnLeader: number;
 }
 
-export const NO_MULTS: PhysMults = { lnK: 0, lnLure: 0, lnAtt: 0, lnDown: 0, lnLeader: 0 };
+export const NO_MULTS: PhysMults = { lnK: 0, lnLure: 0, lnAtt: 0, lnDive: 0, lnDown: 0, lnLeader: 0 };
 
 /** Lure drag area at nominal multiplier, adjusted for size information when we have it. */
 export function lureCda(lure: LureRef): number {
@@ -70,6 +75,16 @@ export function lureCda(lure: LureRef): number {
     f = Math.pow(lure.weightOz / t.defaultOz, 2 / 3);
   }
   return t.cda * Math.min(3.5, Math.max(0.5, f));
+}
+
+/** Bill lift as a fraction of the lure's drag (0 for lures with no lip). */
+export function lureDiveFraction(lure: LureRef): number {
+  const t = LURE_TYPES[lure.type];
+  if (t.dive <= 0) return 0;
+  if ((lure.type === "crankbait" || lure.type === "stickbait" || lure.type === "plug") && lure.ratedDiveFt) {
+    return Math.min(DIVE_FROM_RATED.max, Math.max(DIVE_FROM_RATED.min, DIVE_FROM_RATED.a + DIVE_FROM_RATED.b * lure.ratedDiveFt));
+  }
+  return t.dive;
 }
 
 function leaderSegment(cfg: RigConfig, lnLeader: number): CableSegment | null {
@@ -111,7 +126,9 @@ export function buildCable(cfg: RigConfig, counterFt: number, m: PhysMults = NO_
     wAtt = at.weightN;
   }
   const drag = q * (cdaLure + cdaAtt + HARDWARE.cda);
-  const down = Math.exp(m.lnDown) * (lt.netWeightFrac * massKg * G + lt.hookN + wAtt + HARDWARE.weightN + lt.dive * q * cdaLure);
+  const weightForce = Math.exp(m.lnDown) * (lt.netWeightFrac * massKg * G + lt.hookN + wAtt + HARDWARE.weightN);
+  const diveForce = lureDiveFraction(cfg.lure) * Math.exp(m.lnDive) * q * cdaLure;
+  const down = weightForce + diveForce;
 
   const line = lineSpec(cfg.lineId);
   const K = line.K * Math.exp(m.lnK);
@@ -150,6 +167,7 @@ export function paramNamesFor(cfg: RigConfig): string[] {
     P.typeOff(cfg.lure.type),
   ];
   if (cfg.leader.lengthFt > 0) out.push(P.lnLeader);
+  if (lureDiveFraction(cfg.lure) > 0) out.push(P.typeDive(cfg.lure.type), P.lureDive(cfg.lure.id));
   if (cfg.attractor) out.push(P.attTypeDrag(cfg.attractor.type), P.attDrag(cfg.attractor.id));
   if (cfg.rigId) out.push(P.rig(cfg.rigId));
   return out;
@@ -176,6 +194,7 @@ export function multsFrom(cfg: RigConfig, get: Getter): PhysMults {
     lnK: get(P.lnK(cfg.lineId)),
     lnLure: get(P.typeDrag(cfg.lure.type)) + get(P.lureDrag(cfg.lure.id)),
     lnAtt: cfg.attractor ? get(P.attTypeDrag(cfg.attractor.type)) + get(P.attDrag(cfg.attractor.id)) : 0,
+    lnDive: lureDiveFraction(cfg.lure) > 0 ? get(P.typeDive(cfg.lure.type)) + get(P.lureDive(cfg.lure.id)) : 0,
     lnDown: get(P.lnDown),
     lnLeader: get(P.lnLeader),
   };
@@ -213,6 +232,11 @@ export function logDepthGrad(cfg: RigConfig, counterFt: number, get: Getter): Gr
     const dA = (lnPhys(cfg, counterFt, { ...m, lnAtt: m.lnAtt + FD }) - y0) / FD;
     add(P.attTypeDrag(cfg.attractor.type), dA);
     add(P.attDrag(cfg.attractor.id), dA);
+  }
+  if (lureDiveFraction(cfg.lure) > 0) {
+    const dD = (lnPhys(cfg, counterFt, { ...m, lnDive: m.lnDive + FD }) - y0) / FD;
+    add(P.typeDive(cfg.lure.type), dD);
+    add(P.lureDive(cfg.lure.id), dD);
   }
   add(P.lnDown, (lnPhys(cfg, counterFt, { ...m, lnDown: m.lnDown + FD }) - y0) / FD);
   if (cfg.leader.lengthFt > 0) add(P.lnLeader, (lnPhys(cfg, counterFt, { ...m, lnLeader: m.lnLeader + FD }) - y0) / FD);

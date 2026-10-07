@@ -13,8 +13,8 @@ export function priorFor(name: string): PriorSpec {
   if (scope === "phys") {
     const kind = parts[1];
     if (kind === "line") return { mean: 0, sd: 0.3 }; //         lnK
-    if (kind === "lureType") return { mean: 0, sd: 0.35 }; //    lure drag, by type
-    if (kind === "lure") return { mean: 0, sd: 0.3 }; //         lure drag, this model
+    if (kind === "lureType") return { mean: 0, sd: parts[3] === "lnDive" ? 0.4 : 0.35 }; // drag or bill lift, by type
+    if (kind === "lure") return { mean: 0, sd: 0.3 }; //         drag or bill lift, this model
     if (kind === "attType") return { mean: 0, sd: 0.4 };
     if (kind === "att") return { mean: 0, sd: 0.3 };
     if (kind === "global") return { mean: 0, sd: parts[2] === "lnDown" ? 0.5 : 0.4 };

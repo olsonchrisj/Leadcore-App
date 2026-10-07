@@ -39,14 +39,14 @@ Numerics: RK4 on a deterministic geometric step grid (0.02 m growing ×1.25 to 1
 
 ### Starting values (`src/engine/catalog.ts`)
 
-**These are engineering estimates, not measurements.** Sufix 832 is calibrated so a reference rig (300 ft of leadcore, 2 mph, 50 ft of 12 lb fluorocarbon leader, 0.35 oz spoon) gives about 7.0 ft of depth per 30 ft color (the commonly quoted figure); traditional leadcore about 4.6. Lure and attractor drag areas are order-of-magnitude values per type, scaled by weight, length or rated dive depth; leader drag and density come from material and test. Everything is multiplied by a learned factor, so errors here cost accuracy only until the readings outvote them.
+**These are engineering estimates, not measurements.** Sufix 832 is calibrated so a reference rig (300 ft of leadcore, 2 mph, 50 ft of 12 lb fluorocarbon leader, 0.35 oz spoon) gives about 7.0 ft of depth per 30 ft color (the commonly quoted figure); traditional leadcore about 5.2 (the quoted figures are 5 for traditional and 7 for Sufix 832). Lure and attractor drag areas are order-of-magnitude values per type, scaled by weight, length or rated dive depth; the bill lift of a lipped lure comes from its rated dive (a #5 Shad Rap runs about 8 ft below its leader's end on 50 ft of 10 lb mono, which fixes the scale); leader drag and density come from material and test. Everything is multiplied by a learned factor, so errors here cost accuracy only until the readings outvote them.
 
 ### What the physics says (and tests pin down)
 
 - Depth is roughly proportional to 1/speed for a long line (fitted exponent about −1.06).
 - Backing keeps sinking at about the leadcore's end angle, so it adds roughly 0.19 ft of depth per foot out (the old model's "+2% per 100 ft" was wrong).
 - The leader and lure don't just add a constant: their effect decays slowly along the line, which is why lure weight and leader drag still matter on a deep set.
-- With no leadcore out, a 50 ft leader and a small spoon still sit about 8–10 ft down at 2 mph (the model's own estimate; learnable).
+- With no leadcore out, a 50 ft leader and a small spoon still sit about 8–11 ft down at 2 mph, and a #5 Shad Rap on 50 ft of mono about 8 ft (the model's own estimates; learnable).
 
 ## How it learns (`src/engine/fit.ts`, `model.ts`, `priors.ts`)
 
@@ -54,7 +54,7 @@ Numerics: RK4 on a deterministic geometric step grid (0.02 m growing ×1.25 to 1
 ln(depth_ft) = ln(physical depth with learned multipliers) + discrepancy
 ```
 
-- **Learned physical multipliers** (log scale): line constant `K` (per line), lure drag (by type, then per lure), attractor drag (by type, then per attractor), global lure downforce, global leader drag. A lure with few readings borrows from its type.
+- **Learned physical multipliers** (log scale): line constant `K` (per line), lure drag (by type, then per lure), bill lift of lipped lures (by type, then per lure: how steeply the line leaves the lure), attractor drag (by type, then per attractor), global lure weight-in-water, global leader drag. A lure with few readings borrows from its type.
 - **Discrepancy:** a small linear correction (offset, speed slope, line-out slope, per-rig / per-lure / per-type offsets) that soaks up whatever the physics misses, held tight by its priors.
 - **Priors:** Gaussian on every parameter (sd 0.3 on the line constant, 0.35 / 0.3 on lure type / lure drag, 0.5 on downforce, 0.4 on leader drag, 0.05–0.22 on the discrepancy terms), with hard bounds so the model stays physical.
 - **Fit:** Levenberg–Marquardt on the posterior mode with a Huber loss (threshold 2σ) so one mistyped depth cannot drag the fit; noise σ starts at 7% and is re-estimated from the residuals once there are ≥ 6 readings; warm-started from the previous fit (parameters and noise level), which the app also caches between sessions.
@@ -64,19 +64,19 @@ ln(depth_ft) = ln(physical depth with learned multipliers) + discrepancy
 
 ### Validation (simulation, not field data)
 
-`npm test` runs 82 tests, including: exact limits (catenary with no drag, straight-down hang, level weightless line, terminal slope), step-size convergence, agreement with refined solves across random plausible conditions, monotonicity, finite-difference checks of every gradient, recovery of known parameters from simulated readings, honest 80% bands (about 80% of fresh readings land inside), uncertainty shrinking with data, outlier robustness, leave-one-out versus brute-force refits, and a fit of a season of readings staying fast.
+`npm test` runs 85 tests, including: exact limits (catenary with no drag, straight-down hang, level weightless line, terminal slope), step-size convergence, agreement with refined solves across random plausible conditions, monotonicity, finite-difference checks of every gradient, recovery of known parameters from simulated readings, honest 80% bands (about 80% of fresh readings land inside), uncertainty shrinking with data, outlier robustness, leave-one-out versus brute-force refits, and a fit of a season of readings staying fast.
 
 Simulation results (`src/engine/test-utils.ts` generates the readings):
 
 | Readings logged | Median error on unseen rigs (in-family world) | 90th percentile |
 |---|---|---|
-| 0 (catalogue only) | 6.2% | 12.0% |
-| 6 | 2.3% | 6.6% |
-| 12 | 2.3% | 6.2% |
+| 0 (catalogue only) | 6.8% | 12.3% |
+| 6 | 2.6% | 7.3% |
+| 12 | 2.5% | 7.0% |
 | 24 | 1.1% | 3.3% |
-| 48 | 0.9% | 2.5% |
+| 48 | 1.0% | 2.7% |
 
-That world is one where the true line sinks 20% harder than the catalogue, spoons are draggier and the leader behaves differently, but the physics is the model's own. In a deliberately mis-specified world (depth following a different speed law and fixed offsets that the cable physics cannot reproduce exactly) the median error was 4.3% at 8 readings, 4.0% at 16, 3.1% at 32 and 2.7% at 64 (90th percentile 15% → 8%), and the 80% band held 74–85% of new noisy readings. With no readings in that world the catalogue was off by about 38%, which is what an unverified starting catalogue can do when the real gear differs a lot.
+That world is one where the true line sinks 20% harder than the catalogue, spoons are draggier, crankbill lift is weaker and the leader behaves differently, but the physics is the model's own. In a deliberately mis-specified world (depth following a different speed law and fixed offsets that the cable physics cannot reproduce exactly) the median error was 4.9% at 8 readings, 3.6% at 16, 3.1% at 32 and 2.6% at 64 (90th percentile 16% → 8%), and the 80% band held 71–82% of new noisy readings. With no readings in that world the catalogue was off by about 37%, which is what an unverified starting catalogue can do when the real gear differs a lot.
 
 **None of this is field validation**: it shows the machinery is sound, not that the starting catalogue matches real Sufix 832 and real lures. Expect the first few readings per lure to matter a lot.
 

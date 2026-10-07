@@ -173,6 +173,27 @@ const shot = async (page, name) => SHOTS && (await page.screenshot({ path: path.
   await ctx.close();
 }
 
+// ---------------------------------------------------------------- offline (service worker)
+{
+  const { ctx, page, errors } = await freshPage();
+  await page.goto(BASE);
+  await page.waitForSelector(".result .big");
+  await page.evaluate(() => navigator.serviceWorker.ready.then(() => true));
+  // wait until the precache is filled
+  await page.waitForFunction(async () => (await caches.keys()).some((k) => k.includes("precache")), null, { timeout: 15000 });
+  await page.getByLabel("Depth (LiveScope) (ft)").fill("33");
+  await page.getByRole("button", { name: "Save reading" }).click();
+  await page.getByText(/Saved:/).waitFor();
+  await ctx.setOffline(true);
+  await page.reload();
+  await page.waitForSelector(".result .big", { timeout: 15000 });
+  check("loads with no network once installed", counterOf(await bigText(page)) > 0);
+  await tab(page, "Readings");
+  check("and still has the saved reading", (await page.locator(".reading").count()) === 1);
+  check("no console errors offline", errors.filter((e) => !/Failed to load resource|net::ERR/.test(e)).length === 0, errors.join(" | "));
+  await ctx.close();
+}
+
 // ---------------------------------------------------------------- units and theme
 {
   const { ctx, page, errors } = await freshPage({ colorScheme: "dark" });

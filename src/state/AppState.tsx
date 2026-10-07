@@ -138,7 +138,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       attractor: att ? { id: att.id, type: att.type } : undefined,
       leader: { material: rig.leaderMaterial, lengthFt: rig.leaderFt, ...(rig.leaderTestLb ? { testLb: rig.leaderTestLb } : {}) },
     }),
-    [rig, lure, att],
+    // Not `rig` as a whole: changing only the target depth must not invalidate everything computed from the rig.
+    [rig.lineId, rig.leadcoreFt, rig.speedMph, rig.leaderMaterial, rig.leaderFt, rig.leaderTestLb, lure, att],
   );
 
   // ---- the model: refit whenever the log changes, starting from the last answer

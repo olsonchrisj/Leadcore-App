@@ -79,7 +79,7 @@ export interface LureTypeSpec {
 
 export const LURE_TYPES: Record<LureType, LureTypeSpec> = {
   spoon: { cda: 9.0e-4, defaultOz: 0.35, netWeightFrac: 0.86, hookN: 0.005, dive: 0 },
-  crankbait: { cda: 3.0e-3, defaultOz: 0.3, netWeightFrac: 0.0, hookN: 0.015, dive: 0.18 },
+  crankbait: { cda: 4.0e-4, defaultOz: 0.3, netWeightFrac: 0.0, hookN: 0.015, dive: 0.13 },
   stickbait: { cda: 1.6e-3, defaultOz: 0.3, netWeightFrac: 0.0, hookN: 0.012, dive: 0.12 },
   plug: { cda: 5.0e-3, defaultOz: 0.55, netWeightFrac: 0.04, hookN: 0.02, dive: 0.2 },
   spinner: { cda: 1.0e-3, defaultOz: 0.3, netWeightFrac: 0.55, hookN: 0.006, dive: 0.05 },
@@ -94,7 +94,10 @@ export const LURE_TYPES: Record<LureType, LureTypeSpec> = {
  * about 9°, so tanθ ≈ 0.17 at a rated 8 ft). Like everything here it is a starting
  * value that readings correct.
  */
-export const DIVE_FROM_RATED = { a: 0.05, b: 0.015, min: 0.08, max: 0.4 };
+export const DIVE_FROM_RATED = { a: 0.0135, b: 0.0143, min: 0.06, max: 0.4 };
+
+/** Drag area of a hard bait grows with its bill: factor (1 + k·rated) / (1 + k·ref), relative to the type's nominal. */
+export const CDA_FROM_RATED = { k: 0.29, ref: 8 };
 
 export interface AttractorTypeSpec {
   cda: number;

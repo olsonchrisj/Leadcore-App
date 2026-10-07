@@ -39,7 +39,7 @@ Numerics: RK4 on a deterministic geometric step grid (0.02 m growing ×1.25 to 1
 
 ### Starting values (`src/engine/catalog.ts`)
 
-**These are engineering estimates, not measurements.** Sufix 832 is calibrated so a reference rig (300 ft of leadcore, 2 mph, 50 ft of 12 lb fluorocarbon leader, 0.35 oz spoon) gives about 7.0 ft of depth per 30 ft color (the commonly quoted figure); traditional leadcore about 5.2 (the quoted figures are 5 for traditional and 7 for Sufix 832). Lure and attractor drag areas are order-of-magnitude values per type, scaled by weight, length or rated dive depth; the bill lift of a lipped lure comes from its rated dive (a #5 Shad Rap runs about 8 ft below its leader's end on 50 ft of 10 lb mono, which fixes the scale); leader drag and density come from material and test. Everything is multiplied by a learned factor, so errors here cost accuracy only until the readings outvote them.
+**These are engineering estimates, not measurements.** Sufix 832 is calibrated so a reference rig (300 ft of leadcore, 2 mph, 50 ft of 12 lb fluorocarbon leader, 0.35 oz spoon) gives about 7.0 ft of depth per 30 ft color (the commonly quoted figure); traditional leadcore about 5.2 (the quoted figures are 5 for traditional and 7 for Sufix 832). Lure and attractor drag areas are order-of-magnitude values per type, scaled by weight, length or rated dive depth; the bill lift and drag of a lipped lure come from its rated dive, fitted to a set of scanned dive curves for 10 lb braid/mono at 2 mph (Salmo Hornet H4/H6, Rapala Deep Tail Dancers, a hand-noted crankbait line-out table) and a #5 Shad Rap's ~8 ft on a 50 ft leader. Those curves flatten at long line out, which the model does not reproduce (it over-predicts beyond ~100 ft of mono, an area leadcore rigs rarely use), so the fit targets the first 100 ft; leader drag and density come from material and test. Everything is multiplied by a learned factor, so errors here cost accuracy only until the readings outvote them.
 
 ### What the physics says (and tests pin down)
 
@@ -64,7 +64,7 @@ ln(depth_ft) = ln(physical depth with learned multipliers) + discrepancy
 
 ### Validation (simulation, not field data)
 
-`npm test` runs 87 tests, including: exact limits (catenary with no drag, straight-down hang, level weightless line, terminal slope), step-size convergence, agreement with refined solves across random plausible conditions, monotonicity, finite-difference checks of every gradient, recovery of known parameters from simulated readings, honest 80% bands (about 80% of fresh readings land inside), uncertainty shrinking with data, outlier robustness, leave-one-out versus brute-force refits, and a fit of a season of readings staying fast.
+`npm test` runs 88 tests, including: exact limits (catenary with no drag, straight-down hang, level weightless line, terminal slope), step-size convergence, agreement with refined solves across random plausible conditions, monotonicity, finite-difference checks of every gradient, recovery of known parameters from simulated readings, honest 80% bands (about 80% of fresh readings land inside), uncertainty shrinking with data, outlier robustness, leave-one-out versus brute-force refits, and a fit of a season of readings staying fast.
 
 Simulation results (`src/engine/test-utils.ts` generates the readings):
 

@@ -12,6 +12,16 @@ describe("catalogue calibration", () => {
     expect(depth(baseCfg({ lure: ref, lineId: "generic-leadcore" }), 300) / 10).toBeCloseTo(5.2, 1); // traditional
   });
 
+  it("hard baits on thin line follow the scanned dive curves to within the fit's accuracy", () => {
+    // Salmo Hornet H4 / H6, 10 lb braid, 2 mph: depth at 20, 40, 60, 100 ft of line (read off the chart)
+    const run = (R: number, L: number) =>
+      depth(baseCfg({ lure: { id: "h", type: "crankbait", ratedDiveFt: R }, leader: { material: "braid", lengthFt: L, testLb: 10 } }), 0.001);
+    const cases: [number, number, number][] = [[10.5, 40, 7.7], [10.5, 60, 8.9], [19.5, 40, 12], [19.5, 60, 15], [19.5, 100, 18.7]];
+    for (const [R, L, chart] of cases) expect(Math.abs(Math.log(run(R, L) / chart))).toBeLessThan(0.35);
+    // and a deeper-rated bait runs deeper at every length
+    for (const L of [20, 60, 100]) expect(run(19.5, L)).toBeGreaterThan(run(10.5, L));
+  });
+
   it("matches the published rule-of-thumb examples it was anchored on", () => {
     const shadRap5 = { id: "sr5", type: "crankbait" as const, ratedDiveFt: 8, weightOz: 0.2, lengthIn: 2 };
     const trad = (counter: number) =>

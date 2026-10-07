@@ -15,6 +15,7 @@ import {
   ATTRACTOR_TYPES,
   BACKING,
   DEFAULT_LEADER_TEST_LB,
+  CDA_FROM_RATED,
   DIVE_FROM_RATED,
   FT,
   HARDWARE,
@@ -68,7 +69,7 @@ export function lureCda(lure: LureRef): number {
   const t = LURE_TYPES[lure.type];
   let f = 1;
   if ((lure.type === "crankbait" || lure.type === "stickbait") && lure.ratedDiveFt) {
-    f = (1 + 0.12 * lure.ratedDiveFt) / (1 + 0.12 * 8);
+    f = (1 + CDA_FROM_RATED.k * lure.ratedDiveFt) / (1 + CDA_FROM_RATED.k * CDA_FROM_RATED.ref);
   } else if ((lure.type === "crankbait" || lure.type === "stickbait" || lure.type === "plug") && lure.lengthIn) {
     f = Math.pow(lure.lengthIn / 3, 1.5);
   } else if (lure.weightOz) {

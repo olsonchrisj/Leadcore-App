@@ -1,7 +1,7 @@
 export * from "./types";
 
 /** Bump whenever the physics or the starting catalogue changes, so cached fits from older versions are ignored. */
-export const ENGINE_VERSION = 2;
+export const ENGINE_VERSION = 3;
 export * from "./units";
 export { fitModel } from "./fit";
 export {
